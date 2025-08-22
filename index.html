@@ -17,7 +17,7 @@
 </head>
 <body class="bg-slate-100 text-slate-800 flex items-center justify-center min-h-screen">
     <div class="container mx-auto p-4 max-w-5xl">
-        <div id="loading-view" class="text-center"><i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i><p class="mt-4 text-lg">Cargando datos...</p></div>
+        <div id="loading-view" class="text-center"><i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i><p class="mt-4 text-lg" id="loading-message">Cargando datos...</p></div>
         <div id="login-view">
             <div class="bg-white p-8 rounded-xl shadow-lg max-w-sm mx-auto">
                 <div class="text-center mb-6"><img id="login-logo" src="https://placehold.co/200x80/6366f1/ffffff?text=Tu+Logo" alt="Logo del Restaurante" class="h-16 mx-auto mb-4 object-contain"><h1 class="text-2xl font-bold">CampiClock</h1><p class="text-slate-500">Introduce tu PIN de empleado</p></div>
@@ -90,17 +90,43 @@
             const updatePinDisplay = () => { document.getElementById('pin-display').textContent = '*'.repeat(currentPin.length); };
 
             const setupInitialData = async () => {
-                const { data, error } = await supabase.from('users').select('id', { count: 'exact' }).eq('role', 'manager');
-                if (error) { console.error("Error checking for admin user:", error); document.getElementById('login-error').textContent = 'Error al conectar con la base de datos.'; return; }
-                if (!data || data.length === 0) {
-                    const { error: insertError } = await supabase.from('users').insert([{ name: "Admin", pin: "0000", role: "manager" }]);
-                    if (insertError) console.error("Error inserting admin:", insertError);
+                try {
+                    console.log("Iniciando setupInitialData...");
+                    const { data, error } = await supabase.from('users').select('id', { count: 'exact' }).eq('role', 'manager');
+                    if (error) {
+                        console.error("Error checking for admin user:", error);
+                        throw new Error('Error al verificar usuarios administradores.');
+                    }
+                    if (!data || data.length === 0) {
+                        console.log("No se encontraron administradores, creando uno...");
+                        const { error: insertError } = await supabase.from('users').insert([{ name: "Admin", pin: "0000", role: "manager" }]);
+                        if (insertError) {
+                            console.error("Error inserting admin:", insertError);
+                            throw new Error('Error al crear usuario administrador.');
+                        }
+                    }
+                    console.log("setupInitialData completado.");
+                } catch (err) {
+                    console.error("Error en setupInitialData:", err);
+                    throw err; // Re-lanzar para manejarlo en initializeApp
                 }
             };
 
             const loadCompanyLogoForLogin = async () => {
-                const { data, error } = await supabase.from('company_details').select('logo').limit(1).single();
-                if (data && data.logo) document.getElementById('login-logo').src = data.logo;
+                try {
+                    console.log("Cargando logo de la empresa...");
+                    const { data, error } = await supabase.from('company_details').select('logo').limit(1).single();
+                    if (error) {
+                        console.error("Error cargando logo:", error);
+                        return; // Continuar incluso si falla la carga del logo
+                    }
+                    if (data && data.logo) {
+                        document.getElementById('login-logo').src = data.logo;
+                        console.log("Logo cargado exitosamente.");
+                    }
+                } catch (err) {
+                    console.error("Error inesperado en loadCompanyLogoForLogin:", err);
+                }
             };
 
             const enterPin = (num) => { if (currentPin.length < 4) { currentPin += num; updatePinDisplay(); } };
@@ -290,7 +316,7 @@
                 signaturePad = new window.SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
             };
 
-            const hideSignaturePad = () => { document.getElementById('signature-container').classList.add('hidden'); if (signaturePad).signaturePad.clear(); signaturePad = null; };
+            const hideSignaturePad = () => { document.getElementById('signature-container').classList.add('hidden'); if (signaturePad) signaturePad.clear(); signaturePad = null; };
             const clearSignature = () => { if (signaturePad) signaturePad.clear(); };
 
             const saveSignature = async () => {
@@ -331,7 +357,7 @@
             const saveShift = async () => {
                 const startDate = document.getElementById('shift-date-start').value, startTime = document.getElementById('start-time').value;
                 const endDate = document.getElementById('shift-date-end').value, endTime = document.getElementById('end-time').value;
-                const modalError = document.getElementById('shift mian-modal-error');
+                const modalError = document.getElementById('shift-modal-error');
                 if (!startDate || !startTime || !endDate || !endTime) { modalError.textContent = 'Todos los campos son obligatorios.'; return; }
                 const startDateTime = new Date(`${startDate}T${startTime}`), endDateTime = new Date(`${endDate}T${endTime}`);
                 if (endDateTime <= startDateTime) { modalError.textContent = 'La hora de salida debe ser posterior a la de entrada.'; return; }
@@ -352,7 +378,7 @@
 
             const updateManagerShiftView = () => {
                 const employeeSelect = document.getElementById('employee-select');
-                if (!employeeSelect.value) { document.getElementById('manager-shifts-table-body').innerHTML = '<tr><thyroid colspan="5" class="p-2 text-center text-slate-500">Selecciona un empleado.</td></tr>'; return; }
+                if (!employeeSelect.value) { document.getElementById('manager-shifts-table-body').innerHTML = '<tr><td colspan="5" class="p-2 text-center text-slate-500">Selecciona un empleado.</td></tr>'; return; }
                 const employeeId = employeeSelect.value, monthYear = document.getElementById('month-select').value;
                 const [year, month] = monthYear.split('-');
                 document.getElementById('manager-employee-name').textContent = employeeSelect.options[employeeSelect.selectedIndex].text;
@@ -560,10 +586,32 @@
             };
 
             const initializeApp = async () => {
+                const loadingMessage = document.getElementById('loading-message');
                 showView('loading');
-                await setupInitialData();
-                await loadCompanyLogoForLogin();
-                showView('login');
+                try {
+                    // Establecer un timeout para evitar carga indefinida
+                    const timeoutPromise = new Promise((_, reject) => {
+                        setTimeout(() => reject(new Error('Tiempo de espera agotado al cargar datos iniciales.')), 10000); // 10 segundos
+                    });
+
+                    // Ejecutar las inicializaciones con timeout
+                    await Promise.race([
+                        Promise.all([setupInitialData(), loadCompanyLogoForLogin()]),
+                        timeoutPromise
+                    ]);
+
+                    console.log("Inicialización completada, mostrando vista de login.");
+                    showView('login');
+                } catch (err) {
+                    console.error("Error en initializeApp:", err);
+                    loadingMessage.textContent = 'Error al cargar datos. Continúa con el login.';
+                    loadingMessage.classList.add('text-red-500');
+                    setTimeout(() => {
+                        showView('login');
+                        loadingMessage.textContent = 'Cargando datos...';
+                        loadingMessage.classList.remove('text-red-500');
+                    }, 3000); // Mostrar error por 3 segundos antes de pasar al login
+                }
             };
 
             document.body.addEventListener('click', (e) => {
