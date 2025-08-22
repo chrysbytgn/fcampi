@@ -76,7 +76,7 @@
     </div>
     <script type="module">
         document.addEventListener('DOMContentLoaded', () => {
-            const SUPABASE_URL = 'https://thzalqqhxlqpnaswzraw.supabase.co'; 
+            const SUPABASE_URL = 'https://thzalqqhxlqpnaswzraw.supabase.co';
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoemFscXFoeGxxcG5hc3d6cmF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4ODg2MjcsImV4cCI6MjA3MTQ2NDYyN30.tworaVCWL7suWJqtbR7mIXEivdZaM3lBVtgJLgwRvYc';
 
             const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -97,7 +97,7 @@
                     if (insertError) console.error("Error inserting admin:", insertError);
                 }
             };
-            
+
             const loadCompanyLogoForLogin = async () => {
                 const { data, error } = await supabase.from('company_details').select('logo').limit(1).single();
                 if (data && data.logo) document.getElementById('login-logo').src = data.logo;
@@ -113,7 +113,7 @@
                 const { data, error } = await supabase.from('users').select('*').eq('pin', currentPin).single();
                 if (error || !data) { loginError.textContent = 'PIN incorrecto.'; clearPin(); return; }
                 currentUser = data;
-                if (currentUser.role === 'manager') { showView('manager'); await loadManagerView(); } 
+                if (currentUser.role === 'manager') { showView('manager'); await loadManagerView(); }
                 else { showView('employee'); await loadEmployeeView(); }
             };
 
@@ -122,11 +122,11 @@
                 if (usersSubscription) supabase.removeChannel(usersSubscription);
                 shiftsSubscription = null;
                 usersSubscription = null;
-                currentUser = null; currentPin = ''; activeShiftId = null; 
-                updatePinDisplay(); 
-                showView('login'); 
+                currentUser = null; currentPin = ''; activeShiftId = null;
+                updatePinDisplay();
+                showView('login');
             };
-            
+
             const loadEmployeeView = async () => {
                 document.getElementById('employee-name').textContent = currentUser.name;
                 const now = new Date();
@@ -137,22 +137,62 @@
             };
 
             const listenForShifts = async (userId, monthYear, viewType) => {
-                if (shiftsSubscription) supabase.removeChannel(shiftsSubscription);
-                
+                if (shiftsSubscription) {
+                    await supabase.removeChannel(shiftsSubscription);
+                    shiftsSubscription = null;
+                }
+
                 const fetchAndRender = async () => {
-                    const [year, month] = monthYear.split('-').map(Number);
-                    const startDate = new Date(year, month - 1, 1).toISOString();
-                    const endDate = new Date(year, month, 1).toISOString();
-                    const { data, error } = await supabase.from('shifts').select('*').eq('user_id', userId).gte('start_time', startDate).lt('start_time', endDate);
-                    if (error) { console.error("Error fetching shifts:", error); return; }
-                    data.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
-                    if (viewType === 'employee') updateEmployeeShiftsUI(data);
-                    else updateManagerShiftsUI(data);
+                    try {
+                        const [year, month] = monthYear.split('-').map(Number);
+                        const startDate = new Date(year, month - 1, 1).toISOString();
+                        const endDate = new Date(year, month, 1).toISOString();
+                        const { data, error } = await supabase
+                            .from('shifts')
+                            .select('*')
+                            .eq('user_id', userId)
+                            .gte('start_time', startDate)
+                            .lt('start_time', endDate);
+
+                        if (error) {
+                            console.error("Error fetching shifts:", error);
+                            document.getElementById('clock-status').textContent = 'Error al cargar los datos. Intenta de nuevo.';
+                            document.getElementById('clock-status').classList.add('text-red-500');
+                            return;
+                        }
+                        data.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
+                        if (viewType === 'employee') {
+                            updateEmployeeShiftsUI(data);
+                        } else {
+                            updateManagerShiftsUI(data);
+                        }
+                    } catch (err) {
+                        console.error("Unexpected error in fetchAndRender:", err);
+                        document.getElementById('clock-status').textContent = 'Error inesperado. Intenta de nuevo.';
+                        document.getElementById('clock-status').classList.add('text-red-500');
+                    }
                 };
+
                 await fetchAndRender();
-                shiftsSubscription = supabase.channel(`public:shifts:user_id=eq.${userId}`)
-                    .on('postgres_changes', { event: '*', schema: 'public', table: 'shifts', filter: `user_id=eq.${userId}` }, fetchAndRender)
-                    .subscribe();
+
+                shiftsSubscription = supabase
+                    .channel(`public:shifts:user_id=eq.${userId}`)
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: '*',
+                            schema: 'public',
+                            table: 'shifts',
+                            filter: `user_id=eq.${userId}`,
+                        },
+                        (payload) => {
+                            console.log("Shift change detected:", payload);
+                            fetchAndRender();
+                        }
+                    )
+                    .subscribe((status) => {
+                        console.log("Subscription status:", status);
+                    });
             };
 
             const updateEmployeeShiftsUI = (shifts) => {
@@ -165,6 +205,8 @@
                 updateEmployeeShiftsTable(shifts);
                 updateClockButtons();
                 document.getElementById('total-hours').textContent = (totalMinutes / 60).toFixed(2);
+                const monthYear = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+                updateSignatureButtonState(currentUser.id, monthYear);
             };
 
             const updateEmployeeShiftsTable = (shifts) => {
@@ -189,10 +231,46 @@
                 clockInBtn.disabled = !!activeShiftId; clockOutBtn.disabled = !activeShiftId;
                 clockStatus.textContent = activeShiftId ? 'Turno en progreso.' : '';
                 clockStatus.classList.toggle('text-green-600', !!activeShiftId);
+                clockStatus.classList.remove('text-red-500');
             };
-            
-            const clockIn = async () => { if (!activeShiftId) { const { data } = await supabase.from('shifts').insert([{ user_id: currentUser.id, start_time: new Date().toISOString(), status: 'in-progress' }]).select(); if(data) activeShiftId = data[0].id; } };
-            const clockOut = async () => { if (activeShiftId) { await supabase.from('shifts').update({ end_time: new Date().toISOString(), status: 'completed' }).eq('id', activeShiftId); activeShiftId = null; } };
+
+            const clockIn = async () => {
+                if (!activeShiftId) {
+                    const { data, error } = await supabase
+                        .from('shifts')
+                        .insert([{ user_id: currentUser.id, start_time: new Date().toISOString(), status: 'in-progress' }])
+                        .select();
+                    if (data) {
+                        activeShiftId = data[0].id;
+                        updateClockButtons();
+                        const monthYear = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+                        listenForShifts(currentUser.id, monthYear, 'employee');
+                    } else {
+                        console.error("Error en clockIn:", error);
+                        document.getElementById('clock-status').textContent = 'Error al iniciar turno. Intenta de nuevo.';
+                        document.getElementById('clock-status').classList.add('text-red-500');
+                    }
+                }
+            };
+
+            const clockOut = async () => {
+                if (activeShiftId) {
+                    const { error } = await supabase
+                        .from('shifts')
+                        .update({ end_time: new Date().toISOString(), status: 'completed' })
+                        .eq('id', activeShiftId);
+                    if (!error) {
+                        activeShiftId = null;
+                        updateClockButtons();
+                        const monthYear = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+                        listenForShifts(currentUser.id, monthYear, 'employee');
+                    } else {
+                        console.error("Error en clockOut:", error);
+                        document.getElementById('clock-status').textContent = 'Error al finalizar turno. Intenta de nuevo.';
+                        document.getElementById('clock-status').classList.add('text-red-500');
+                    }
+                }
+            };
 
             const updateSignatureButtonState = async (userId, monthYear) => {
                 const approveBtn = document.getElementById('approve-hours-btn'), signedMsg = document.getElementById('signed-message');
@@ -212,7 +290,7 @@
                 signaturePad = new window.SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
             };
 
-            const hideSignaturePad = () => { document.getElementById('signature-container').classList.add('hidden'); if (signaturePad) signaturePad.clear(); signaturePad = null; };
+            const hideSignaturePad = () => { document.getElementById('signature-container').classList.add('hidden'); if (signaturePad).signaturePad.clear(); signaturePad = null; };
             const clearSignature = () => { if (signaturePad) signaturePad.clear(); };
 
             const saveSignature = async () => {
@@ -253,7 +331,7 @@
             const saveShift = async () => {
                 const startDate = document.getElementById('shift-date-start').value, startTime = document.getElementById('start-time').value;
                 const endDate = document.getElementById('shift-date-end').value, endTime = document.getElementById('end-time').value;
-                const modalError = document.getElementById('shift-modal-error');
+                const modalError = document.getElementById('shift mian-modal-error');
                 if (!startDate || !startTime || !endDate || !endTime) { modalError.textContent = 'Todos los campos son obligatorios.'; return; }
                 const startDateTime = new Date(`${startDate}T${startTime}`), endDateTime = new Date(`${endDate}T${endTime}`);
                 if (endDateTime <= startDateTime) { modalError.textContent = 'La hora de salida debe ser posterior a la de entrada.'; return; }
@@ -261,7 +339,7 @@
                 const { error } = editingShiftId ? await supabase.from('shifts').update(shiftData).eq('id', editingShiftId) : await supabase.from('shifts').insert(shiftData);
                 if (!error) hideShiftForm(); else { console.error(error); modalError.textContent = 'Error al guardar.'; }
             };
-            
+
             const loadManagerView = async () => {
                 document.getElementById('month-select').value = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
                 await populateEmployeeDropdown();
@@ -274,7 +352,7 @@
 
             const updateManagerShiftView = () => {
                 const employeeSelect = document.getElementById('employee-select');
-                if (!employeeSelect.value) { document.getElementById('manager-shifts-table-body').innerHTML = '<tr><td colspan="5" class="p-2 text-center text-slate-500">Selecciona un empleado.</td></tr>'; return; }
+                if (!employeeSelect.value) { document.getElementById('manager-shifts-table-body').innerHTML = '<tr><thyroid colspan="5" class="p-2 text-center text-slate-500">Selecciona un empleado.</td></tr>'; return; }
                 const employeeId = employeeSelect.value, monthYear = document.getElementById('month-select').value;
                 const [year, month] = monthYear.split('-');
                 document.getElementById('manager-employee-name').textContent = employeeSelect.options[employeeSelect.selectedIndex].text;
@@ -339,7 +417,7 @@
                 usersSubscription = supabase.channel('public:users').on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, handleUserChanges).subscribe();
                 handleUserChanges();
             };
-            
+
             const showEmployeeForm = async (userId = null) => {
                 document.getElementById('employee-form-container').classList.remove('hidden');
                 document.getElementById('employee-form').reset();
@@ -367,7 +445,7 @@
                 if (data && data.some(u => u.id != editingUserId)) { modalError.textContent = 'Este PIN ya está en uso.'; return; }
                 const userData = { name, pin, role };
                 const { error } = editingUserId ? await supabase.from('users').update(userData).eq('id', editingUserId) : await supabase.from('users').insert(userData);
-                if (!error) { hideEmployeeForm(); await populateEmployeeDropdown(); } 
+                if (!error) { hideEmployeeForm(); await populateEmployeeDropdown(); }
                 else { modalError.textContent = 'Error al guardar.'; }
             };
 
@@ -404,7 +482,7 @@
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         let { width, height } = img;
-                        if (width > height) { if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; } } 
+                        if (width > height) { if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; } }
                         else { if (height > maxHeight) { width *= maxHeight / height; height = maxHeight; } }
                         canvas.width = width; canvas.height = height;
                         canvas.getContext('2d').drawImage(img, 0, 0, width, height);
@@ -442,7 +520,7 @@
                 const employeeName = document.getElementById('employee-select').options[document.getElementById('employee-select').selectedIndex].text;
                 const [year, month] = monthYear.split('-');
                 const monthName = new Date(year, month - 1).toLocaleString('es-ES', { month: 'long', year: 'numeric' });
-                
+
                 const { data: companyDetails } = await supabase.from('company_details').select('*').limit(1).single();
 
                 if(companyDetails && companyDetails.logo) {
@@ -456,11 +534,11 @@
 
                 docPDF.setFontSize(18); docPDF.text("Registro de Jornada Laboral", 14, 40);
                 docPDF.setFontSize(11); docPDF.text(`Empleado: ${employeeName}`, 14, 50); docPDF.text(`Periodo: ${monthName}`, 14, 56);
-                
+
                 const startDate = new Date(year, month - 1, 1).toISOString();
                 const endDate = new Date(year, month, 1).toISOString();
                 const { data: shifts } = await supabase.from('shifts').select('*').eq('user_id', employeeId).eq('status', 'completed').gte('start_time', startDate).lt('start_time', endDate);
-                
+
                 const tableData = shifts.sort((a,b) => new Date(a.start_time) - new Date(b.start_time)).map(s => {
                     const start = new Date(s.start_time), end = new Date(s.end_time);
                     return [start.toLocaleDateString('es-ES'), start.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}), end.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}), ((end - start) / 3600000).toFixed(2)];
@@ -470,7 +548,7 @@
                 docPDF.autoTable({ head: [['Fecha', 'Entrada', 'Salida', 'Total Horas']], body: tableData, startY: 65, theme: 'grid', headStyles: { fillColor: [74, 85, 104] } });
                 const finalY = docPDF.lastAutoTable.finalY || 80;
                 docPDF.setFontSize(12); docPDF.setFont('helvetica', 'bold'); docPDF.text(`Total Horas Mensuales (Aprobadas): ${totalHours.toFixed(2)}`, 14, finalY + 10);
-                
+
                 const { data: signatureData } = await supabase.from('signatures').select('*').eq('user_id', employeeId).eq('month_year', monthYear).single();
                 if (signatureData) {
                     docPDF.setFontSize(11); docPDF.setFont('helvetica', 'normal');
@@ -510,12 +588,13 @@
             document.getElementById('company-details-form').addEventListener('submit', (e) => { e.preventDefault(); saveCompanyDetails(); });
             document.getElementById('logo-upload').addEventListener('change', handleLogoUpload);
             ['employee-select', 'month-select'].forEach(id => document.getElementById(id).addEventListener('change', updateManagerShiftView));
-            
+
             initializeApp();
         });
     </script>
 </body>
 </html>
+
 
 
 
