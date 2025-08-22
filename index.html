@@ -215,7 +215,19 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             // --- Configuración de Firebase ---
-            const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+            // CORRECCIÓN: Se añade una validación para asegurar que la configuración de Firebase existe.
+            // Si no se encuentra, se muestra un error en lugar de quedarse en "Cargando...".
+            if (typeof __firebase_config === 'undefined' || !__firebase_config) {
+                const loadingView = document.getElementById('loading-view');
+                loadingView.innerHTML = `
+                    <i class="fas fa-exclamation-triangle text-4xl text-red-500"></i>
+                    <p class="mt-4 text-lg text-red-700">Error de Configuración</p>
+                    <p class="text-slate-500 mt-2">No se pudo cargar la configuración de la base de datos. Por favor, contacta al soporte.</p>
+                `;
+                return; // Detiene la ejecución si no hay configuración
+            }
+
+            const firebaseConfig = JSON.parse(__firebase_config);
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-restaurant-app';
 
             const app = initializeApp(firebaseConfig);
@@ -313,9 +325,6 @@
                 const endDate = new Date(year, month, 1);
                 const shiftsRef = collection(db, `artifacts/${appId}/public/data/shifts`);
                 
-                // CORRECCIÓN: Se añade el filtro de fecha (startTime) directamente en la consulta.
-                // Esto es mucho más eficiente porque solo trae los documentos del mes seleccionado
-                // desde la base de datos, en lugar de todos los turnos del usuario.
                 const q = query(shiftsRef, 
                     where("userId", "==", userId),
                     where("startTime", ">=", startDate),
@@ -340,7 +349,7 @@
                 let totalMinutes = 0;
                 activeShiftId = null;
                 shifts.forEach(shift => {
-                    if (shift.status === 'completed') { totalMinutes += (shift.endTime.toDate() - shift.startTime.toDate()) / 60000; } 
+                    if (shift.status === 'completed' && shift.endTime) { totalMinutes += (shift.endTime.toDate() - shift.startTime.toDate()) / 60000; } 
                     else if (shift.status === 'in-progress') { activeShiftId = shift.id; }
                 });
                 updateEmployeeShiftsTable(shifts);
@@ -450,7 +459,7 @@
                 if (shifts.length === 0) { tableBody.innerHTML = '<tr><td colspan="5" class="p-2 text-center text-slate-500">No hay registros para esta selección.</td></tr>'; }
                 else {
                     shifts.forEach(shift => {
-                        if (shift.status === 'completed') { totalMinutes += (shift.endTime.toDate() - shift.startTime.toDate()) / 60000; }
+                        if (shift.status === 'completed' && shift.endTime) { totalMinutes += (shift.endTime.toDate() - shift.startTime.toDate()) / 60000; }
                         const start = shift.startTime.toDate();
                         const end = shift.endTime ? shift.endTime.toDate() : null;
                         const totalHours = end ? ((end - start) / 3600000).toFixed(2) : '-';
@@ -738,8 +747,6 @@
                 const startDate = new Date(year, month - 1, 1);
                 const endDate = new Date(year, month, 1);
                 
-                // CORRECCIÓN: Se añade filtro de fecha a la consulta y se filtra el estado 'completed' en el cliente.
-                // Esto es más eficiente que traer todos los turnos del empleado.
                 const q = query(shiftsRef, where("userId", "==", employeeId), where("startTime", ">=", startDate), where("startTime", "<", endDate));
                 const snapshot = await getDocs(q);
                 const shifts = snapshot.docs.map(d => d.data()).filter(s => s.status === 'completed');
@@ -795,7 +802,6 @@
                 document.getElementById('add-employee-btn').addEventListener('click', () => showEmployeeForm());
                 document.getElementById('employee-form').addEventListener('submit', (e) => { e.preventDefault(); saveEmployee(); });
                 document.getElementById('cancel-employee-form-btn').addEventListener('click', hideEmployeeForm);
-                // CORRECCIÓN: Se añaden listeners para que la tabla de informes se actualice al cambiar el mes o el empleado.
                 document.getElementById('employee-select').addEventListener('change', updateManagerShiftView);
                 document.getElementById('month-select').addEventListener('change', updateManagerShiftView);
                 // Configuración
@@ -810,3 +816,4 @@
     </script>
 </body>
 </html>
+
