@@ -88,7 +88,7 @@
             const updatePinDisplay = () => { document.getElementById('pin-display').textContent = '*'.repeat(currentPin.length); };
 
             const setupInitialData = async () => {
-                const { data, error } = await supabase.from('users').select('id').eq('role', 'manager').limit(1);
+                const { data, error } = await supabase.from('users').select('id', { count: 'exact' }).eq('role', 'manager');
                 if (error) {
                     console.error("Error checking for admin user:", error);
                     document.getElementById('login-error').textContent = 'Error al conectar con la base de datos.';
