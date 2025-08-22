@@ -430,10 +430,10 @@
                     try { docPDF.addImage(companyDetails.logo, 'PNG', 14, 10, 40, 20); } catch(e) { console.error(e); }
                 }
                 docPDF.setFontSize(12);
-                docPDF.text(companyDetails.name || 'Nombre Empresa', 195, 15, { align: 'right' });
+                docPDF.text(companyDetails?.name || 'Nombre Empresa', 195, 15, { align: 'right' });
                 docPDF.setFontSize(8);
-                docPDF.text(companyDetails.cif || 'CIF/NIF', 195, 20, { align: 'right' });
-                docPDF.text(companyDetails.address || 'Dirección', 195, 25, { align: 'right' });
+                docPDF.text(companyDetails?.cif || 'CIF/NIF', 195, 20, { align: 'right' });
+                docPDF.text(companyDetails?.address || 'Dirección', 195, 25, { align: 'right' });
 
                 docPDF.setFontSize(18); docPDF.text("Registro de Jornada Laboral", 14, 40);
                 docPDF.setFontSize(11); docPDF.text(`Empleado: ${employeeName}`, 14, 50); docPDF.text(`Periodo: ${monthName}`, 14, 56);
