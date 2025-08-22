@@ -83,6 +83,8 @@
 
             const views = { loading: document.getElementById('loading-view'), login: document.getElementById('login-view'), employee: document.getElementById('employee-view'), manager: document.getElementById('manager-view') };
             let currentUser = null, currentPin = '', activeShiftId = null, signaturePad, editingShiftId = null, tempLogoData = null;
+            let shiftsSubscription = null;
+            let usersSubscription = null;
 
             const showView = (viewName) => { Object.values(views).forEach(v => v.style.display = 'none'); views[viewName].style.display = 'block'; };
             const updatePinDisplay = () => { document.getElementById('pin-display').textContent = '*'.repeat(currentPin.length); };
@@ -115,7 +117,15 @@
                 else { showView('employee'); await loadEmployeeView(); }
             };
 
-            const logout = () => { currentUser = null; currentPin = ''; activeShiftId = null; updatePinDisplay(); showView('login'); };
+            const logout = () => {
+                if (shiftsSubscription) supabase.removeChannel(shiftsSubscription);
+                if (usersSubscription) supabase.removeChannel(usersSubscription);
+                shiftsSubscription = null;
+                usersSubscription = null;
+                currentUser = null; currentPin = ''; activeShiftId = null; 
+                updatePinDisplay(); 
+                showView('login'); 
+            };
             
             const loadEmployeeView = async () => {
                 document.getElementById('employee-name').textContent = currentUser.name;
@@ -127,6 +137,8 @@
             };
 
             const listenForShifts = async (userId, monthYear, viewType) => {
+                if (shiftsSubscription) supabase.removeChannel(shiftsSubscription);
+                
                 const fetchAndRender = async () => {
                     const [year, month] = monthYear.split('-').map(Number);
                     const startDate = new Date(year, month - 1, 1).toISOString();
@@ -138,7 +150,9 @@
                     else updateManagerShiftsUI(data);
                 };
                 await fetchAndRender();
-                supabase.channel('public:shifts').on('postgres_changes', { event: '*', schema: 'public', table: 'shifts', filter: `user_id=eq.${userId}` }, fetchAndRender).subscribe();
+                shiftsSubscription = supabase.channel(`public:shifts:userId=eq.${userId}`)
+                    .on('postgres_changes', { event: '*', schema: 'public', table: 'shifts', filter: `user_id=eq.${userId}` }, fetchAndRender)
+                    .subscribe();
             };
 
             const updateEmployeeShiftsUI = (shifts) => {
@@ -321,8 +335,9 @@
                     const { data } = await supabase.from('users').select('*');
                     if (data) renderEmployeeList(data);
                 };
-                supabase.channel('public:users').on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, handleUserChanges).subscribe();
-                handleUserChanges(); // Initial fetch
+                if (usersSubscription) supabase.removeChannel(usersSubscription);
+                usersSubscription = supabase.channel('public:users').on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, handleUserChanges).subscribe();
+                handleUserChanges();
             };
             
             const showEmployeeForm = async (userId = null) => {
@@ -501,6 +516,7 @@
     </script>
 </body>
 </html>
+
 
 
 
