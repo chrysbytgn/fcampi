@@ -89,11 +89,7 @@
 
             const setupInitialData = async () => {
                 const { data, error } = await supabase.from('users').select('id', { count: 'exact' }).eq('role', 'manager');
-                if (error) {
-                    console.error("Error checking for admin user:", error);
-                    document.getElementById('login-error').textContent = 'Error al conectar con la base de datos.';
-                    return;
-                }
+                if (error) { console.error("Error checking for admin user:", error); document.getElementById('login-error').textContent = 'Error al conectar con la base de datos.'; return; }
                 if (!data || data.length === 0) {
                     const { error: insertError } = await supabase.from('users').insert([{ name: "Admin", pin: "0000", role: "manager" }]);
                     if (insertError) console.error("Error inserting admin:", insertError);
@@ -135,21 +131,21 @@
                     const [year, month] = monthYear.split('-').map(Number);
                     const startDate = new Date(year, month - 1, 1).toISOString();
                     const endDate = new Date(year, month, 1).toISOString();
-                    const { data, error } = await supabase.from('shifts').select('*').eq('userId', userId).gte('startTime', startDate).lt('startTime', endDate);
+                    const { data, error } = await supabase.from('shifts').select('*').eq('user_id', userId).gte('start_time', startDate).lt('start_time', endDate);
                     if (error) { console.error("Error fetching shifts:", error); return; }
-                    data.sort((a, b) => new Date(b.startTime) - new Date(a.startTime));
+                    data.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
                     if (viewType === 'employee') updateEmployeeShiftsUI(data);
                     else updateManagerShiftsUI(data);
                 };
                 await fetchAndRender();
-                supabase.channel('public:shifts').on('postgres_changes', { event: '*', schema: 'public', table: 'shifts', filter: `userId=eq.${userId}` }, fetchAndRender).subscribe();
+                supabase.channel('public:shifts').on('postgres_changes', { event: '*', schema: 'public', table: 'shifts', filter: `user_id=eq.${userId}` }, fetchAndRender).subscribe();
             };
 
             const updateEmployeeShiftsUI = (shifts) => {
                 let totalMinutes = 0;
                 activeShiftId = null;
                 shifts.forEach(shift => {
-                    if (shift.status === 'completed' && shift.endTime) totalMinutes += (new Date(shift.endTime) - new Date(shift.startTime)) / 60000;
+                    if (shift.status === 'completed' && shift.end_time) totalMinutes += (new Date(shift.end_time) - new Date(shift.start_time)) / 60000;
                     else if (shift.status === 'in-progress') activeShiftId = shift.id;
                 });
                 updateEmployeeShiftsTable(shifts);
@@ -163,8 +159,8 @@
                 const headers = `<thead><tr class="border-b"><th class="p-2">Fecha</th><th class="p-2">Entrada</th><th class="p-2">Salida</th><th class="p-2">Total Horas</th><th class="p-2">Estado</th><th class="p-2"></th></tr></thead>`;
                 if (shifts.length === 0) { tableBody.innerHTML = '<tr><td colspan="6" class="p-2 text-center text-slate-500">No hay registros este mes.</td></tr>'; table.querySelector('thead').innerHTML = headers; return; }
                 const rows = shifts.map(shift => {
-                    const start = new Date(shift.startTime);
-                    const end = shift.endTime ? new Date(shift.endTime) : null;
+                    const start = new Date(shift.start_time);
+                    const end = shift.end_time ? new Date(shift.end_time) : null;
                     const totalHours = end ? ((end - start) / 3600000).toFixed(2) : 'En curso';
                     const statusMap = { completed: '<span class="text-green-600">Aprobado</span>', pending_approval: '<span class="text-yellow-600">Pendiente</span>', in_progress: '<span class="text-blue-600">En curso</span>' };
                     const editButton = shift.status !== 'in-progress' ? `<button data-action="show-shift-form" data-shift-id="${shift.id}" class="text-blue-600 hover:text-blue-800"><i class="fas fa-edit"></i></button>` : '';
@@ -181,13 +177,13 @@
                 clockStatus.classList.toggle('text-green-600', !!activeShiftId);
             };
             
-            const clockIn = async () => { if (!activeShiftId) { const { data } = await supabase.from('shifts').insert([{ userId: currentUser.id, startTime: new Date().toISOString(), status: 'in-progress' }]).select(); if(data) activeShiftId = data[0].id; } };
-            const clockOut = async () => { if (activeShiftId) { await supabase.from('shifts').update({ endTime: new Date().toISOString(), status: 'completed' }).eq('id', activeShiftId); activeShiftId = null; } };
+            const clockIn = async () => { if (!activeShiftId) { const { data } = await supabase.from('shifts').insert([{ user_id: currentUser.id, start_time: new Date().toISOString(), status: 'in-progress' }]).select(); if(data) activeShiftId = data[0].id; } };
+            const clockOut = async () => { if (activeShiftId) { await supabase.from('shifts').update({ end_time: new Date().toISOString(), status: 'completed' }).eq('id', activeShiftId); activeShiftId = null; } };
 
             const updateSignatureButtonState = async (userId, monthYear) => {
                 const approveBtn = document.getElementById('approve-hours-btn'), signedMsg = document.getElementById('signed-message');
                 approveBtn.classList.add('hidden'); signedMsg.classList.add('hidden');
-                const { data } = await supabase.from('signatures').select('id').eq('userId', userId).eq('monthYear', monthYear).single();
+                const { data } = await supabase.from('signatures').select('id').eq('user_id', userId).eq('month_year', monthYear).single();
                 if (data) { signedMsg.classList.remove('hidden'); return; }
                 const today = new Date(), [year, month] = monthYear.split('-').map(Number);
                 if (today >= new Date(year, month, 0)) approveBtn.classList.remove('hidden');
@@ -210,7 +206,7 @@
                 signatureError.textContent = '';
                 if (!signaturePad || signaturePad.isEmpty()) { signatureError.textContent = "Por favor, proporciona una firma."; return; }
                 const now = new Date(), monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-                const { error } = await supabase.from('signatures').insert([{ userId: currentUser.id, monthYear, signatureData: signaturePad.toDataURL(), signedAt: now.toISOString() }]);
+                const { error } = await supabase.from('signatures').insert([{ user_id: currentUser.id, month_year: monthYear, signature_data: signaturePad.toDataURL(), signed_at: now.toISOString() }]);
                 if (!error) { hideSignaturePad(); updateSignatureButtonState(currentUser.id, monthYear); }
                 else signatureError.textContent = `Error al guardar.`;
             };
@@ -229,7 +225,7 @@
                 if (editingShiftId) {
                     const { data } = await supabase.from('shifts').select('*').eq('id', editingShiftId).single();
                     if (data) {
-                        const start = new Date(data.startTime), end = new Date(data.endTime);
+                        const start = new Date(data.start_time), end = new Date(data.end_time);
                         document.getElementById('shift-date-start').value = start.toISOString().split('T')[0];
                         document.getElementById('start-time').value = start.toTimeString().substring(0, 5);
                         document.getElementById('shift-date-end').value = end.toISOString().split('T')[0];
@@ -247,15 +243,15 @@
                 if (!startDate || !startTime || !endDate || !endTime) { modalError.textContent = 'Todos los campos son obligatorios.'; return; }
                 const startDateTime = new Date(`${startDate}T${startTime}`), endDateTime = new Date(`${endDate}T${endTime}`);
                 if (endDateTime <= startDateTime) { modalError.textContent = 'La hora de salida debe ser posterior a la de entrada.'; return; }
-                const shiftData = { userId: currentUser.id, startTime: startDateTime.toISOString(), endTime: endDateTime.toISOString(), status: 'pending_approval' };
+                const shiftData = { user_id: currentUser.id, start_time: startDateTime.toISOString(), end_time: endDateTime.toISOString(), status: 'pending_approval' };
                 const { error } = editingShiftId ? await supabase.from('shifts').update(shiftData).eq('id', editingShiftId) : await supabase.from('shifts').insert(shiftData);
-                if (!error) hideShiftForm(); else modalError.textContent = 'Error al guardar.';
+                if (!error) hideShiftForm(); else { console.error(error); modalError.textContent = 'Error al guardar.'; }
             };
             
             const loadManagerView = async () => {
                 document.getElementById('month-select').value = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
                 await populateEmployeeDropdown();
-                await renderEmployeeList();
+                listenForEmployees();
                 await loadCompanySettings();
                 updateManagerShiftView();
             };
@@ -280,8 +276,8 @@
                 let totalMinutes = 0;
                 if (shifts.length === 0) { tableBody.innerHTML = '<tr><td colspan="5" class="p-2 text-center text-slate-500">No hay registros.</td></tr>'; table.querySelector('thead').innerHTML = headers; return; }
                 const rows = shifts.map(shift => {
-                    if (shift.status === 'completed' && shift.endTime) totalMinutes += (new Date(shift.endTime) - new Date(shift.startTime)) / 60000;
-                    const start = new Date(shift.startTime), end = shift.endTime ? new Date(shift.endTime) : null;
+                    if (shift.status === 'completed' && shift.end_time) totalMinutes += (new Date(shift.end_time) - new Date(shift.start_time)) / 60000;
+                    const start = new Date(shift.start_time), end = shift.end_time ? new Date(shift.end_time) : null;
                     const totalHours = end ? ((end - start) / 3600000).toFixed(2) : '-';
                     const actionsHtml = shift.status === 'pending_approval' ? `<div class="flex gap-2"><button data-action="approve-shift" data-shift-id="${shift.id}" class="text-green-600 hover:text-green-800"><i class="fas fa-check"></i></button><button data-action="reject-shift" data-shift-id="${shift.id}" class="text-red-600 hover:text-red-800"><i class="fas fa-times"></i></button></div>` : '-';
                     return `<tr class="${shift.status === 'pending_approval' ? 'pending-approval' : ''} border-b last:border-b-0"><td class="p-2">${start.toLocaleDateString('es-ES')}</td><td class="p-2">${start.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</td><td class="p-2">${end ? end.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) : '-'}</td><td class="p-2">${totalHours}</td><td class="p-2">${actionsHtml}</td></tr>`;
@@ -293,8 +289,8 @@
 
             const updateManagerSignatureDisplay = async (userId, monthYear) => {
                 const signatureDisplay = document.getElementById('manager-signature-display');
-                const { data } = await supabase.from('signatures').select('*').eq('userId', userId).eq('monthYear', monthYear).single();
-                if (data) signatureDisplay.innerHTML = `<h4 class="font-semibold">Firma del Empleado</h4><img src="${data.signatureData}" alt="Firma" class="mt-2 border rounded-md bg-white"/><p class="text-sm text-slate-500 mt-1">Firmado el: ${new Date(data.signedAt).toLocaleString('es-ES')}</p>`;
+                const { data } = await supabase.from('signatures').select('*').eq('user_id', userId).eq('month_year', monthYear).single();
+                if (data) signatureDisplay.innerHTML = `<h4 class="font-semibold">Firma del Empleado</h4><img src="${data.signature_data}" alt="Firma" class="mt-2 border rounded-md bg-white"/><p class="text-sm text-slate-500 mt-1">Firmado el: ${new Date(data.signed_at).toLocaleString('es-ES')}</p>`;
                 else signatureDisplay.innerHTML = '<p class="text-slate-500">Este parte de horas aún no ha sido firmado.</p>';
             };
 
@@ -306,11 +302,10 @@
                 if (data) document.getElementById('employee-select').innerHTML = data.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
             };
 
-            const renderEmployeeList = async () => {
+            const renderEmployeeList = (users) => {
                 const listDiv = document.getElementById('employee-list');
-                const { data } = await supabase.from('users').select('*');
-                if (!data) return;
-                listDiv.innerHTML = data.map(emp => `
+                if (!users || users.length === 0) { listDiv.innerHTML = '<p class="text-slate-500 text-center p-4">No hay empleados registrados.</p>'; return; }
+                listDiv.innerHTML = users.map(emp => `
                     <div id="employee-${emp.id}" class="bg-slate-50 p-3 rounded-lg flex justify-between items-center">
                         <div><p class="font-semibold">${emp.name}</p><p class="text-sm text-slate-500">PIN: ${emp.pin} | Rol: ${emp.role === 'manager' ? 'Admin' : 'Empleado'}</p></div>
                         <div class="flex items-center space-x-2">
@@ -319,6 +314,15 @@
                             <button id="delete-btn-${emp.id}" data-action="delete-employee" data-user-id="${emp.id}" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
                         </div>
                     </div>`).join('');
+            };
+
+            const listenForEmployees = () => {
+                const handleUserChanges = async () => {
+                    const { data } = await supabase.from('users').select('*');
+                    if (data) renderEmployeeList(data);
+                };
+                supabase.channel('public:users').on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, handleUserChanges).subscribe();
+                handleUserChanges(); // Initial fetch
             };
             
             const showEmployeeForm = async (userId = null) => {
@@ -348,13 +352,13 @@
                 if (data && data.some(u => u.id != editingUserId)) { modalError.textContent = 'Este PIN ya está en uso.'; return; }
                 const userData = { name, pin, role };
                 const { error } = editingUserId ? await supabase.from('users').update(userData).eq('id', editingUserId) : await supabase.from('users').insert(userData);
-                if (!error) { hideEmployeeForm(); await renderEmployeeList(); await populateEmployeeDropdown(); } 
+                if (!error) { hideEmployeeForm(); await populateEmployeeDropdown(); } 
                 else { modalError.textContent = 'Error al guardar.'; }
             };
 
             const showDeleteConfirm = (userId) => { document.getElementById(`delete-confirm-${userId}`).classList.remove('hidden'); document.getElementById(`delete-btn-${userId}`).classList.add('hidden'); };
             const cancelDeleteConfirm = (userId) => { document.getElementById(`delete-confirm-${userId}`).classList.add('hidden'); document.getElementById(`delete-btn-${userId}`).classList.remove('hidden'); };
-            const executeDelete = async (userId) => { if (userId) { await supabase.from('users').delete().eq('id', userId); await renderEmployeeList(); await populateEmployeeDropdown(); }};
+            const executeDelete = async (userId) => { if (userId) { await supabase.from('users').delete().eq('id', userId); await populateEmployeeDropdown(); }};
 
             const loadCompanySettings = async () => {
                 const { data } = await supabase.from('company_details').select('*').limit(1).single();
@@ -415,7 +419,7 @@
             };
 
             const generatePDF = async () => {
-                 const { jsPDF } = window.jspdf;
+                const { jsPDF } = window.jspdf;
                 const docPDF = new jsPDF();
                 const employeeId = document.getElementById('employee-select').value;
                 const monthYear = document.getElementById('month-select').value;
@@ -440,24 +444,24 @@
                 
                 const startDate = new Date(year, month - 1, 1).toISOString();
                 const endDate = new Date(year, month, 1).toISOString();
-                const { data: shifts } = await supabase.from('shifts').select('*').eq('userId', employeeId).eq('status', 'completed').gte('startTime', startDate).lt('startTime', endDate);
+                const { data: shifts } = await supabase.from('shifts').select('*').eq('user_id', employeeId).eq('status', 'completed').gte('start_time', startDate).lt('start_time', endDate);
                 
-                const tableData = shifts.sort((a,b) => new Date(a.startTime) - new Date(b.startTime)).map(s => {
-                    const start = new Date(s.startTime), end = new Date(s.endTime);
+                const tableData = shifts.sort((a,b) => new Date(a.start_time) - new Date(b.start_time)).map(s => {
+                    const start = new Date(s.start_time), end = new Date(s.end_time);
                     return [start.toLocaleDateString('es-ES'), start.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}), end.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}), ((end - start) / 3600000).toFixed(2)];
                 });
-                const totalHours = shifts.reduce((acc, s) => acc + (new Date(s.endTime) - new Date(s.startTime)), 0) / 3600000;
+                const totalHours = shifts.reduce((acc, s) => acc + (new Date(s.end_time) - new Date(s.start_time)), 0) / 3600000;
 
                 docPDF.autoTable({ head: [['Fecha', 'Entrada', 'Salida', 'Total Horas']], body: tableData, startY: 65, theme: 'grid', headStyles: { fillColor: [74, 85, 104] } });
                 const finalY = docPDF.lastAutoTable.finalY || 80;
                 docPDF.setFontSize(12); docPDF.setFont('helvetica', 'bold'); docPDF.text(`Total Horas Mensuales (Aprobadas): ${totalHours.toFixed(2)}`, 14, finalY + 10);
                 
-                const { data: signatureData } = await supabase.from('signatures').select('*').eq('userId', employeeId).eq('monthYear', monthYear).single();
+                const { data: signatureData } = await supabase.from('signatures').select('*').eq('user_id', employeeId).eq('month_year', monthYear).single();
                 if (signatureData) {
                     docPDF.setFontSize(11); docPDF.setFont('helvetica', 'normal');
                     docPDF.text("Firma de conformidad del empleado:", 14, finalY + 25);
-                    docPDF.addImage(signatureData.signatureData, 'PNG', 14, finalY + 30, 60, 30);
-                    docPDF.text(`Firmado el: ${new Date(signatureData.signedAt).toLocaleString('es-ES')}`, 14, finalY + 65);
+                    docPDF.addImage(signatureData.signature_data, 'PNG', 14, finalY + 30, 60, 30);
+                    docPDF.text(`Firmado el: ${new Date(signatureData.signed_at).toLocaleString('es-ES')}`, 14, finalY + 65);
                 } else { docPDF.text("Parte de horas pendiente de firma.", 14, finalY + 25); }
                 docPDF.save(`Registro_Horario_${employeeName.replace(' ', '_')}_${monthYear}.pdf`);
             };
