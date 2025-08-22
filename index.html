@@ -94,21 +94,24 @@
                     console.log("Iniciando setupInitialData...");
                     const { data, error } = await supabase.from('users').select('id', { count: 'exact' }).eq('role', 'manager');
                     if (error) {
-                        console.error("Error checking for admin user:", error);
-                        throw new Error('Error al verificar usuarios administradores.');
+                        console.error("Error al verificar usuarios administradores:", error);
+                        throw new Error(`Error al verificar usuarios administradores: ${error.message}`);
                     }
+                    console.log("Usuarios administradores encontrados:", data?.length || 0);
                     if (!data || data.length === 0) {
-                        console.log("No se encontraron administradores, creando uno...");
+                        console.log("No se encontraron administradores, intentando crear uno...");
                         const { error: insertError } = await supabase.from('users').insert([{ name: "Admin", pin: "0000", role: "manager" }]);
                         if (insertError) {
-                            console.error("Error inserting admin:", insertError);
-                            throw new Error('Error al crear usuario administrador.');
+                            console.error("Error al crear usuario administrador:", insertError);
+                            throw new Error(`Error al crear usuario administrador: ${insertError.message}`);
                         }
+                        console.log("Usuario administrador creado exitosamente.");
+                    } else {
+                        console.log("Usuario administrador ya existe.");
                     }
-                    console.log("setupInitialData completado.");
                 } catch (err) {
                     console.error("Error en setupInitialData:", err);
-                    throw err; // Re-lanzar para manejarlo en initializeApp
+                    throw err;
                 }
             };
 
@@ -118,7 +121,7 @@
                     const { data, error } = await supabase.from('company_details').select('logo').limit(1).single();
                     if (error) {
                         console.error("Error cargando logo:", error);
-                        return; // Continuar incluso si falla la carga del logo
+                        return;
                     }
                     if (data && data.logo) {
                         document.getElementById('login-logo').src = data.logo;
@@ -589,28 +592,24 @@
                 const loadingMessage = document.getElementById('loading-message');
                 showView('loading');
                 try {
-                    // Establecer un timeout para evitar carga indefinida
                     const timeoutPromise = new Promise((_, reject) => {
-                        setTimeout(() => reject(new Error('Tiempo de espera agotado al cargar datos iniciales.')), 10000); // 10 segundos
+                        setTimeout(() => reject(new Error('Tiempo de espera agotado al cargar datos iniciales.')), 10000);
                     });
-
-                    // Ejecutar las inicializaciones con timeout
                     await Promise.race([
                         Promise.all([setupInitialData(), loadCompanyLogoForLogin()]),
                         timeoutPromise
                     ]);
-
                     console.log("Inicialización completada, mostrando vista de login.");
                     showView('login');
                 } catch (err) {
                     console.error("Error en initializeApp:", err);
-                    loadingMessage.textContent = 'Error al cargar datos. Continúa con el login.';
+                    loadingMessage.textContent = `Error al cargar datos: ${err.message}. Continúa con el login.`;
                     loadingMessage.classList.add('text-red-500');
                     setTimeout(() => {
                         showView('login');
                         loadingMessage.textContent = 'Cargando datos...';
                         loadingMessage.classList.remove('text-red-500');
-                    }, 3000); // Mostrar error por 3 segundos antes de pasar al login
+                    }, 5000);
                 }
             };
 
@@ -642,7 +641,6 @@
     </script>
 </body>
 </html>
-
 
 
 
