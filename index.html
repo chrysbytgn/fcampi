@@ -211,66 +211,61 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, getDocs, query, where, addDoc, doc, updateDoc, onSnapshot, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        document.addEventListener('DOMContentLoaded', () => {
-            // --- Configuración de Firebase ---
-            // CORRECCIÓN: Se proporciona una configuración de Firebase de respaldo/marcador de posición.
-            // Esto permite que la aplicación se inicialice y se ejecute localmente para pruebas,
-            // incluso si las variables de configuración del entorno (__firebase_config) no se inyectan.
-            const defaultConfig = {
-                apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-                authDomain: "projectId.firebaseapp.com",
-                projectId: "projectId",
-                storageBucket: "projectId.appspot.com",
-                messagingSenderId: "000000000000",
-                appId: "1:000000000000:web:0000000000000000000000"
+        (async () => {
+            const firebaseConfig = {
+              apiKey: "AIzaSyAJZoW2wHb35WWhvFgbmA7PCTbBmhkOiCA",
+              authDomain: "fcampi-d9dda.firebaseapp.com",
+              projectId: "fcampi-d9dda",
+              storageBucket: "fcampi-d9dda.appspot.com",
+              messagingSenderId: "583647080928",
+              appId: "1:583647080928:web:215a39b3410afa15403b85"
             };
 
-            const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config)
-                ? JSON.parse(__firebase_config)
-                : defaultConfig;
-            
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-restaurant-app';
-
-            const app = initializeApp(firebaseConfig);
-            const db = getFirestore(app);
-            const auth = getAuth(app);
+            const firestoreAppId = typeof __app_id !== 'undefined' ? __app_id : 'default-restaurant-app';
 
             // --- Referencias a Elementos del DOM ---
             const views = { loading: document.getElementById('loading-view'), login: document.getElementById('login-view'), employee: document.getElementById('employee-view'), manager: document.getElementById('manager-view') };
 
             // --- Estado de la Aplicación ---
             let currentUser = null, currentPin = '', activeShiftId = null, signaturePad, editingShiftId = null, tempLogoData = null;
-            let unsubscribeShifts = null; // Para limpiar el listener de onSnapshot
-
-            // --- Autenticación ---
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    showView('login');
-                    setupInitialData();
-                    loadCompanyLogoForLogin();
-                    initializeEventListeners();
-                } else {
-                    (async () => {
-                        try {
-                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                                await signInWithCustomToken(auth, __initial_auth_token);
-                            } else {
-                                await signInAnonymously(auth);
-                            }
-                        } catch (error) { console.error("Error de autenticación:", error); }
-                    })();
+            let unsubscribeShifts = null;
+            
+            // --- Inicialización y Autenticación ---
+            let db, auth;
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                await signInAnonymously(auth);
+            } catch (error) {
+                console.error("Error de inicialización o autenticación:", error);
+                const loadingView = document.getElementById('loading-view');
+                if (loadingView) {
+                    loadingView.innerHTML = `
+                        <i class="fas fa-exclamation-triangle text-4xl text-red-500"></i>
+                        <p class="mt-4 text-lg text-red-700">Error de Conexión</p>
+                        <p class="text-slate-500 mt-2">No se pudo conectar. Verifica la configuración de Firebase y que la autenticación anónima esté habilitada.</p>
+                    `;
                 }
+                return;
+            }
+
+            // --- Lógica de la Aplicación ---
+            document.addEventListener('DOMContentLoaded', () => {
+                showView('login');
+                setupInitialData();
+                loadCompanyLogoForLogin();
+                initializeEventListeners();
             });
 
-            // --- Lógica de Inicialización ---
             async function setupInitialData() {
-                const setupDocRef = doc(db, `artifacts/${appId}/public/data/app_config`, 'initial_setup');
+                const setupDocRef = doc(db, `artifacts/${firestoreAppId}/public/data/app_config`, 'initial_setup');
                 const docSnap = await getDoc(setupDocRef);
 
                 if (!docSnap.exists()) {
-                    const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
+                    const usersRef = collection(db, `artifacts/${firestoreAppId}/public/data/users`);
                     const usersData = [{ name: "Admin", pin: "0000", role: "manager" }];
                     for (const userData of usersData) { await addDoc(usersRef, userData); }
                     await setDoc(setupDocRef, { setupComplete: true });
@@ -287,7 +282,7 @@
                 loginError.textContent = '';
                 if (currentPin.length !== 4) { loginError.textContent = 'El PIN debe tener 4 dígitos.'; return; }
                 try {
-                    const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
+                    const usersRef = collection(db, `artifacts/${firestoreAppId}/public/data/users`);
                     const q = query(usersRef, where("pin", "==", currentPin));
                     const querySnapshot = await getDocs(q);
                     if (querySnapshot.empty) { loginError.textContent = 'PIN incorrecto.'; clearPin(); return; }
@@ -300,7 +295,7 @@
 
             function logout() {
                 currentUser = null; currentPin = ''; activeShiftId = null; 
-                if(unsubscribeShifts) unsubscribeShifts(); // Limpia el listener al cerrar sesión
+                if(unsubscribeShifts) unsubscribeShifts();
                 unsubscribeShifts = null;
                 updatePinDisplay(); 
                 showView('login'); 
@@ -318,7 +313,6 @@
             }
 
             function listenForShifts(userId, monthYear, viewType) {
-                // Si ya hay un listener activo, lo detenemos para evitar duplicados
                 if (unsubscribeShifts) {
                     unsubscribeShifts();
                 }
@@ -326,7 +320,7 @@
                 const [year, month] = monthYear.split('-').map(Number);
                 const startDate = new Date(year, month - 1, 1);
                 const endDate = new Date(year, month, 1);
-                const shiftsRef = collection(db, `artifacts/${appId}/public/data/shifts`);
+                const shiftsRef = collection(db, `artifacts/${firestoreAppId}/public/data/shifts`);
                 
                 const q = query(shiftsRef, 
                     where("userId", "==", userId),
@@ -380,8 +374,8 @@
                 else { clockInBtn.disabled = false; clockOutBtn.disabled = true; clockStatus.textContent = ''; clockStatus.classList.remove('text-green-600'); }
             }
 
-            async function clockIn() { if (activeShiftId) return; try { const shiftsRef = collection(db, `artifacts/${appId}/public/data/shifts`); const docRef = await addDoc(shiftsRef, { userId: currentUser.id, startTime: new Date(), endTime: null, status: 'in-progress' }); activeShiftId = docRef.id; } catch (error) { console.error("Error al iniciar turno:", error); } }
-            async function clockOut() { if (!activeShiftId) return; try { const shiftDocRef = doc(db, `artifacts/${appId}/public/data/shifts`, activeShiftId); await updateDoc(shiftDocRef, { endTime: new Date(), status: 'completed' }); activeShiftId = null; } catch (error) { console.error("Error al finalizar turno:", error); } }
+            async function clockIn() { if (activeShiftId) return; try { const shiftsRef = collection(db, `artifacts/${firestoreAppId}/public/data/shifts`); const docRef = await addDoc(shiftsRef, { userId: currentUser.id, startTime: new Date(), endTime: null, status: 'in-progress' }); activeShiftId = docRef.id; } catch (error) { console.error("Error al iniciar turno:", error); } }
+            async function clockOut() { if (!activeShiftId) return; try { const shiftDocRef = doc(db, `artifacts/${firestoreAppId}/public/data/shifts`, activeShiftId); await updateDoc(shiftDocRef, { endTime: new Date(), status: 'completed' }); activeShiftId = null; } catch (error) { console.error("Error al finalizar turno:", error); } }
 
             // --- Lógica de Firma ---
             async function updateSignatureButtonState(userId, monthYear) {
@@ -389,7 +383,7 @@
                 const signedMsg = document.getElementById('signed-message');
                 approveBtn.classList.add('hidden');
                 signedMsg.classList.add('hidden');
-                const signatureDocRef = doc(db, `artifacts/${appId}/public/data/signatures`, `${userId}_${monthYear}`);
+                const signatureDocRef = doc(db, `artifacts/${firestoreAppId}/public/data/signatures`, `${userId}_${monthYear}`);
                 const docSnap = await getDoc(signatureDocRef);
                 if (docSnap.exists()) { signedMsg.classList.remove('hidden'); return; }
                 const today = new Date();
@@ -408,7 +402,7 @@
                 const now = new Date();
                 const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
                 try {
-                    const signatureDocRef = doc(db, `artifacts/${appId}/public/data/signatures`, `${currentUser.id}_${monthYear}`);
+                    const signatureDocRef = doc(db, `artifacts/${firestoreAppId}/public/data/signatures`, `${currentUser.id}_${monthYear}`);
                     await setDoc(signatureDocRef, { userId: currentUser.id, monthYear: monthYear, signatureData: signatureDataURL, signedAt: new Date() });
                     hideSignaturePad();
                     updateSignatureButtonState(currentUser.id, monthYear);
@@ -479,7 +473,7 @@
 
             async function updateManagerSignatureDisplay(employeeId, monthYear) {
                 const signatureDisplay = document.getElementById('manager-signature-display');
-                const signatureDocRef = doc(db, `artifacts/${appId}/public/data/signatures`, `${employeeId}_${monthYear}`);
+                const signatureDocRef = doc(db, `artifacts/${firestoreAppId}/public/data/signatures`, `${employeeId}_${monthYear}`);
                 const docSnap = await getDoc(signatureDocRef);
                 if (docSnap.exists()) {
                     const signatureData = docSnap.data();
@@ -487,12 +481,12 @@
                 } else { signatureDisplay.innerHTML = '<p class="text-slate-500">Este parte de horas aún no ha sido firmado.</p>'; }
             }
 
-            async function approveShift(shiftId) { try { await updateDoc(doc(db, `artifacts/${appId}/public/data/shifts`, shiftId), { status: 'completed' }); } catch (e) { console.error(e); } }
-            async function rejectShift(shiftId) { try { await deleteDoc(doc(db, `artifacts/${appId}/public/data/shifts`, shiftId)); } catch (e) { console.error(e); } }
+            async function approveShift(shiftId) { try { await updateDoc(doc(db, `artifacts/${firestoreAppId}/public/data/shifts`, shiftId), { status: 'completed' }); } catch (e) { console.error(e); } }
+            async function rejectShift(shiftId) { try { await deleteDoc(doc(db, `artifacts/${firestoreAppId}/public/data/shifts`, shiftId)); } catch (e) { console.error(e); } }
 
             async function populateEmployeeDropdown() {
                 const employeeSelect = document.getElementById('employee-select');
-                const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
+                const usersRef = collection(db, `artifacts/${firestoreAppId}/public/data/users`);
                 const q = query(usersRef, where("role", "==", "employee"));
                 const querySnapshot = await getDocs(q);
                 const currentSelection = employeeSelect.value;
@@ -504,7 +498,7 @@
             // --- Gestión de Empleados (Manager) ---
             async function renderEmployeeList() {
                 const employeeListDiv = document.getElementById('employee-list');
-                const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
+                const usersRef = collection(db, `artifacts/${firestoreAppId}/public/data/users`);
                 const snapshot = await getDocs(usersRef);
                 employeeListDiv.innerHTML = '';
                 if (snapshot.empty) { employeeListDiv.innerHTML = '<p class="text-slate-500 text-center p-4">No hay empleados registrados.</p>'; return; }
@@ -548,7 +542,7 @@
                     formTitle.textContent = 'Editar Empleado';
                     saveBtn.textContent = 'Actualizar';
                     roleSelector.parentElement.classList.remove('hidden');
-                    getDoc(doc(db, `artifacts/${appId}/public/data/users`, userId)).then(userSnap => {
+                    getDoc(doc(db, `artifacts/${firestoreAppId}/public/data/users`, userId)).then(userSnap => {
                         if (userSnap.exists()) { 
                             const userData = userSnap.data(); 
                             document.getElementById('employee-name-input').value = userData.name; 
@@ -575,7 +569,7 @@
                 const role = document.getElementById('employee-role-select').value;
                 const modalError = document.getElementById('modal-error');
                 if (!name || !pin || !/^\d{4}$/.test(pin)) { modalError.textContent = 'Por favor, completa todos los campos correctamente.'; return; }
-                const usersRef = collection(db, `artifacts/${appId}/public/data/users`);
+                const usersRef = collection(db, `artifacts/${firestoreAppId}/public/data/users`);
                 const q = query(usersRef, where("pin", "==", pin));
                 const snapshot = await getDocs(q);
                 let pinExists = false;
@@ -585,7 +579,7 @@
                 const userData = { name, pin, role };
 
                 try {
-                    if (editingUserId) { await updateDoc(doc(db, `artifacts/${appId}/public/data/users`, editingUserId), userData); } 
+                    if (editingUserId) { await updateDoc(doc(db, `artifacts/${firestoreAppId}/public/data/users`, editingUserId), userData); } 
                     else { await addDoc(usersRef, userData); }
                     hideEmployeeForm();
                     await renderEmployeeList();
@@ -597,7 +591,7 @@
             async function executeDelete(userId) {
                 if (!userId) return;
                 try {
-                    await deleteDoc(doc(db, `artifacts/${appId}/public/data/users`, userId));
+                    await deleteDoc(doc(db, `artifacts/${firestoreAppId}/public/data/users`, userId));
                     await renderEmployeeList();
                     await populateEmployeeDropdown();
                     updateManagerShiftView();
@@ -615,7 +609,7 @@
                 const modalTitle = document.getElementById('shift-form-title');
                 if (editingShiftId) {
                     modalTitle.textContent = 'Editar Fichaje';
-                    getDoc(doc(db, `artifacts/${appId}/public/data/shifts`, editingShiftId)).then(shiftSnap => {
+                    getDoc(doc(db, `artifacts/${firestoreAppId}/public/data/shifts`, editingShiftId)).then(shiftSnap => {
                         if (shiftSnap.exists()) {
                             const shift = shiftSnap.data();
                             const start = shift.startTime.toDate();
@@ -641,8 +635,8 @@
                 if (endDateTime <= startDateTime) { modalError.textContent = 'La hora de salida debe ser posterior a la de entrada.'; return; }
                 const shiftData = { userId: currentUser.id, startTime: startDateTime, endTime: endDateTime, status: 'pending_approval' };
                 try {
-                    if (editingShiftId) { await updateDoc(doc(db, `artifacts/${appId}/public/data/shifts`, editingShiftId), shiftData); } 
-                    else { await addDoc(collection(db, `artifacts/${appId}/public/data/shifts`), shiftData); }
+                    if (editingShiftId) { await updateDoc(doc(db, `artifacts/${firestoreAppId}/public/data/shifts`, editingShiftId), shiftData); } 
+                    else { await addDoc(collection(db, `artifacts/${firestoreAppId}/public/data/shifts`), shiftData); }
                     hideShiftForm();
                 } catch (error) { console.error("Error al guardar fichaje:", error); modalError.textContent = 'Error al guardar.'; }
             }
@@ -651,7 +645,7 @@
             async function saveCompanyDetails() {
                 const companyDetails = { name: document.getElementById('company-name').value, cif: document.getElementById('company-cif').value, address: document.getElementById('company-address').value };
                 try {
-                    const companyDocRef = doc(db, `artifacts/${appId}/public/data/company_details`, 'main');
+                    const companyDocRef = doc(db, `artifacts/${firestoreAppId}/public/data/company_details`, 'main');
                     await setDoc(companyDocRef, companyDetails, { merge: true });
                     const successMsg = document.getElementById('company-details-success');
                     successMsg.classList.remove('hidden');
@@ -660,7 +654,7 @@
             }
 
             async function loadCompanySettings() {
-                const companyDocRef = doc(db, `artifacts/${appId}/public/data/company_details`, 'main');
+                const companyDocRef = doc(db, `artifacts/${firestoreAppId}/public/data/company_details`, 'main');
                 const docSnap = await getDoc(companyDocRef);
                 if (docSnap.exists()) {
                     const data = docSnap.data();
@@ -672,7 +666,7 @@
             }
 
             async function loadCompanyLogoForLogin() {
-                const companyDocRef = doc(db, `artifacts/${appId}/public/data/company_details`, 'main');
+                const companyDocRef = doc(db, `artifacts/${firestoreAppId}/public/data/company_details`, 'main');
                 const docSnap = await getDoc(companyDocRef);
                 if (docSnap.exists() && docSnap.data().logo) { document.getElementById('login-logo').src = docSnap.data().logo; }
             }
@@ -714,7 +708,7 @@
             async function saveLogo() {
                 if (!tempLogoData) return;
                 try {
-                    const companyDocRef = doc(db, `artifacts/${appId}/public/data/company_details`, 'main');
+                    const companyDocRef = doc(db, `artifacts/${firestoreAppId}/public/data/company_details`, 'main');
                     await setDoc(companyDocRef, { logo: tempLogoData }, { merge: true });
                     const successMsg = document.getElementById('logo-save-success');
                     successMsg.classList.remove('hidden');
@@ -736,7 +730,7 @@
                 const [year, month] = monthYear.split('-');
                 const monthName = new Date(year, month - 1).toLocaleString('es-ES', { month: 'long', year: 'numeric' });
                 
-                const companyDocRef = doc(db, `artifacts/${appId}/public/data/company_details`, 'main');
+                const companyDocRef = doc(db, `artifacts/${firestoreAppId}/public/data/company_details`, 'main');
                 const companySnap = await getDoc(companyDocRef);
                 const companyDetails = companySnap.exists() ? companySnap.data() : {};
 
@@ -746,7 +740,7 @@
                 docPDF.setFontSize(18); docPDF.text("Registro de Jornada Laboral", 14, 40);
                 docPDF.setFontSize(11); docPDF.text(`Empleado: ${employeeName}`, 14, 50); docPDF.text(`Periodo: ${monthName}`, 14, 56);
                 
-                const shiftsRef = collection(db, `artifacts/${appId}/public/data/shifts`);
+                const shiftsRef = collection(db, `artifacts/${firestoreAppId}/public/data/shifts`);
                 const startDate = new Date(year, month - 1, 1);
                 const endDate = new Date(year, month, 1);
                 
@@ -764,7 +758,7 @@
                 const finalY = docPDF.lastAutoTable.finalY || 80;
                 docPDF.setFontSize(12); docPDF.setFont('helvetica', 'bold'); docPDF.text(`Total Horas Mensuales (Aprobadas): ${totalHours.toFixed(2)}`, 14, finalY + 10);
                 
-                const signatureDocRef = doc(db, `artifacts/${appId}/public/data/signatures`, `${employeeId}_${monthYear}`);
+                const signatureDocRef = doc(db, `artifacts/${firestoreAppId}/public/data/signatures`, `${employeeId}_${monthYear}`);
                 const docSnap = await getDoc(signatureDocRef);
                 if (docSnap.exists()) {
                     const signatureData = docSnap.data();
@@ -815,9 +809,11 @@
 
             // --- Exponer funciones al scope global para los `onclick` ---
             Object.assign(window, { showShiftForm, approveShift, rejectShift, showEmployeeForm, executeDelete, showDeleteConfirm, cancelDeleteConfirm });
-        });
+
+        })();
     </script>
 </body>
 </html>
+
 
 
