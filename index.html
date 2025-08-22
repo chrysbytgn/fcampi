@@ -150,7 +150,7 @@
                     else updateManagerShiftsUI(data);
                 };
                 await fetchAndRender();
-                shiftsSubscription = supabase.channel(`public:shifts:userId=eq.${userId}`)
+                shiftsSubscription = supabase.channel(`public:shifts:user_id=eq.${userId}`)
                     .on('postgres_changes', { event: '*', schema: 'public', table: 'shifts', filter: `user_id=eq.${userId}` }, fetchAndRender)
                     .subscribe();
             };
