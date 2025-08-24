@@ -22,7 +22,19 @@
         #employee-view, #manager-view, #login-view { display: none; }
         .signature-canvas { border: 2px dashed #e5e7eb; border-radius: 0.5rem; cursor: crosshair; }
         .pending-approval { background-color: #fefce8; }
-        .tab-active { border-bottom: 2px solid #4b5bff; color: #4b5bff; font-weight: 600; }
+        .tab { 
+            padding: 0.75rem 0; 
+            font-size: 1rem; 
+            font-weight: 500;
+            color: #6b7280;
+            transition: color 0.3s ease;
+            cursor: pointer;
+        }
+        .tab-active { 
+            border-bottom: 2px solid #4b5bff; 
+            color: #4b5bff; 
+            font-weight: 600; 
+        }
 
         /* Estilos mejorados para botones */
         .btn {
@@ -39,6 +51,22 @@
             cursor: pointer;
             text-decoration: none;
         }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+        button:disabled, .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background-color: #d1d5db !important;
+            color: #6b7280 !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
 
         /* Botones PIN (teclado numérico) */
         .pin-btn {
@@ -46,17 +74,13 @@
             color: #374151;
             min-width: 3rem;
             height: 3rem;
+            border-radius: 9999px; /* Botones redondos */
+            font-size: 1.25rem;
         }
         .pin-btn:hover {
             background-color: #d1d5db;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
-        .pin-btn:active {
-            transform: translateY(0);
-            box-shadow: none;
-        }
-
+        
         /* Botón principal (azul) */
         .btn-primary {
             background-color: #4b5bff;
@@ -64,12 +88,6 @@
         }
         .btn-primary:hover {
             background-color: #3b4ddd;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(75, 91, 255, 0.2);
-        }
-        .btn-primary:active {
-            transform: translateY(0);
-            box-shadow: none;
         }
 
         /* Botón secundario (gris) */
@@ -79,12 +97,6 @@
         }
         .btn-secondary:hover {
             background-color: #4b5563;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .btn-secondary:active {
-            transform: translateY(0);
-            box-shadow: none;
         }
 
         /* Botón de éxito (verde) */
@@ -94,12 +106,6 @@
         }
         .btn-success:hover {
             background-color: #059669;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(16, 185, 129, 0.2);
-        }
-        .btn-success:active {
-            transform: translateY(0);
-            box-shadow: none;
         }
 
         /* Botón de peligro (rojo) */
@@ -109,12 +115,6 @@
         }
         .btn-danger:hover {
             background-color: #dc2626;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(239, 68, 68, 0.2);
-        }
-        .btn-danger:active {
-            transform: translateY(0);
-            box-shadow: none;
         }
 
         /* Estilo para botones con texto e icono */
@@ -123,35 +123,21 @@
             padding: 0.75rem 1.5rem;
         }
 
-        /* Estado deshabilitado */
-        button:disabled, .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            background-color: #9ca3af;
-            color: #ffffff;
-            transform: none;
-            box-shadow: none;
-        }
-
         /* Responsive design */
         @media (max-width: 640px) {
             .pin-btn {
-                padding: 1rem;
-                font-size: 1.25rem;
                 min-width: 3.5rem;
                 height: 3.5rem;
             }
             .btn {
                 padding: 0.625rem 1rem;
                 font-size: 0.875rem;
-                min-width: 100px;
             }
             .btn-icon-text {
                 min-width: 90px;
-                padding: 0.625rem 1rem;
             }
         }
-
+        
         /* Estilos adicionales */
         .form-input {
             width: 100%;
@@ -187,18 +173,18 @@
                     <div id="pin-display" class="bg-slate-100 text-center text-3xl font-mono tracking-widest h-16 flex items-center justify-center rounded-lg mt-2"></div>
                 </div>
                 <div class="grid grid-cols-3 gap-3">
-                    <button data-action="enter-pin" data-value="1" class="pin-btn">1</button>
-                    <button data-action="enter-pin" data-value="2" class="pin-btn">2</button>
-                    <button data-action="enter-pin" data-value="3" class="pin-btn">3</button>
-                    <button data-action="enter-pin" data-value="4" class="pin-btn">4</button>
-                    <button data-action="enter-pin" data-value="5" class="pin-btn">5</button>
-                    <button data-action="enter-pin" data-value="6" class="pin-btn">6</button>
-                    <button data-action="enter-pin" data-value="7" class="pin-btn">7</button>
-                    <button data-action="enter-pin" data-value="8" class="pin-btn">8</button>
-                    <button data-action="enter-pin" data-value="9" class="pin-btn">9</button>
-                    <button data-action="clear-pin" class="pin-btn btn-secondary btn-icon-text"><i class="fas fa-times"></i> Borrar</button>
-                    <button data-action="enter-pin" data-value="0" class="pin-btn">0</button>
-                    <button data-action="login" class="pin-btn btn-primary btn-icon-text"><i class="fas fa-check"></i> Entrar</button>
+                    <button data-action="enter-pin" data-value="1" class="pin-btn btn">1</button>
+                    <button data-action="enter-pin" data-value="2" class="pin-btn btn">2</button>
+                    <button data-action="enter-pin" data-value="3" class="pin-btn btn">3</button>
+                    <button data-action="enter-pin" data-value="4" class="pin-btn btn">4</button>
+                    <button data-action="enter-pin" data-value="5" class="pin-btn btn">5</button>
+                    <button data-action="enter-pin" data-value="6" class="pin-btn btn">6</button>
+                    <button data-action="enter-pin" data-value="7" class="pin-btn btn">7</button>
+                    <button data-action="enter-pin" data-value="8" class="pin-btn btn">8</button>
+                    <button data-action="enter-pin" data-value="9" class="pin-btn btn">9</button>
+                    <button data-action="clear-pin" class="pin-btn btn btn-secondary btn-icon-text"><i class="fas fa-times"></i> Borrar</button>
+                    <button data-action="enter-pin" data-value="0" class="pin-btn btn">0</button>
+                    <button data-action="login" class="pin-btn btn btn-primary btn-icon-text"><i class="fas fa-check"></i> Entrar</button>
                 </div>
                 <p id="login-error" class="text-red-500 text-center mt-4 h-4"></p>
             </div>
@@ -206,16 +192,16 @@
         <div id="employee-view" class="bg-white p-8 rounded-xl shadow-lg">
             <div class="flex justify-between items-center mb-6">
                 <div><h2 class="text-2xl font-bold">Hola, <span id="employee-name"></span></h2><p class="text-slate-500">Listo para empezar tu jornada</p></div>
-                <button data-action="logout" class="btn-danger btn-icon-text"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
+                <button data-action="logout" class="btn btn-danger btn-icon-text"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <button data-action="clock-in" id="clock-in-btn" class="btn-success btn-icon-text"><i class="fas fa-play-circle"></i> Iniciar Turno</button>
-                <button data-action="clock-out" id="clock-out-btn" class="btn-danger btn-icon-text" disabled><i class="fas fa-stop-circle"></i> Finalizar Turno</button>
+                <button data-action="clock-in" id="clock-in-btn" class="btn btn-success btn-icon-text"><i class="fas fa-play-circle"></i> Iniciar Turno</button>
+                <button data-action="clock-out" id="clock-out-btn" class="btn btn-danger btn-icon-text" disabled><i class="fas fa-stop-circle"></i> Finalizar Turno</button>
             </div>
             <p id="clock-status" class="text-center text-slate-600 mb-6 h-6"></p>
             <div class="flex justify-between items-center mb-2">
                 <h3 class="text-xl font-semibold">Resumen de Horas (<span id="current-month"></span>)</h3>
-                <button data-action="show-shift-form" class="btn-primary btn-icon-text"><i class="fas fa-plus"></i> Añadir Fichaje</button>
+                <button data-action="show-shift-form" class="btn btn-primary btn-icon-text"><i class="fas fa-plus"></i> Añadir Fichaje</button>
             </div>
             <div id="shift-form-container" class="hidden bg-slate-50 p-4 rounded-lg my-4">
                 <h3 id="shift-form-title" class="text-lg font-bold mb-4">Añadir Fichaje Olvidado</h3>
@@ -228,8 +214,8 @@
                     </div>
                     <p id="shift-modal-error" class="text-red-500 text-sm mt-2 h-4"></p>
                     <div class="mt-6 flex justify-end gap-3">
-                        <button type="button" data-action="hide-shift-form" class="btn-secondary btn-icon-text"><i class="fas fa-times"></i> Cancelar</button>
-                        <button type="submit" class="btn-primary btn-icon-text"><i class="fas fa-save"></i> Solicitar Cambio</button>
+                        <button type="button" data-action="hide-shift-form" class="btn btn-secondary btn-icon-text"><i class="fas fa-times"></i> Cancelar</button>
+                        <button type="submit" class="btn btn-primary btn-icon-text"><i class="fas fa-save"></i> Solicitar Cambio</button>
                     </div>
                 </form>
             </div>
@@ -239,7 +225,7 @@
             <div class="flex justify-end items-center mt-4 gap-4">
                 <div class="text-right font-bold text-lg">Total Mensual (Aprobado): <span id="total-hours">0.00</span> horas</div>
                 <div id="signature-controls">
-                    <button data-action="open-signature-modal" id="approve-hours-btn" class="btn-primary btn-icon-text hidden"><i class="fas fa-signature"></i> Aprobar y Firmar</button>
+                    <button data-action="open-signature-modal" id="approve-hours-btn" class="btn btn-primary btn-icon-text hidden"><i class="fas fa-signature"></i> Aprobar y Firmar</button>
                     <div id="signed-message" class="hidden text-green-600 font-semibold flex items-center gap-2"><i class="fas fa-check-circle"></i> Resumen Firmado</div>
                 </div>
             </div>
@@ -249,16 +235,16 @@
                 <canvas id="signature-canvas" class="signature-canvas w-full h-48 bg-white"></canvas>
                 <p id="signature-error" class="text-red-500 text-sm mt-2 h-4 text-right"></p>
                 <div class="mt-6 flex justify-end gap-3">
-                    <button type="button" data-action="clear-signature" class="btn-secondary btn-icon-text"><i class="fas fa-eraser"></i> Limpiar</button>
-                    <button type="button" data-action="cancel-signature" class="btn-secondary btn-icon-text"><i class="fas fa-times"></i> Cancelar</button>
-                    <button type="button" data-action="save-signature" class="btn-primary btn-icon-text"><i class="fas fa-save"></i> Guardar Firma</button>
+                    <button type="button" data-action="clear-signature" class="btn btn-secondary btn-icon-text"><i class="fas fa-eraser"></i> Limpiar</button>
+                    <button type="button" data-action="cancel-signature" class="btn btn-secondary btn-icon-text"><i class="fas fa-times"></i> Cancelar</button>
+                    <button type="button" data-action="save-signature" class="btn btn-primary btn-icon-text"><i class="fas fa-save"></i> Guardar Firma</button>
                 </div>
             </div>
         </div>
         <div id="manager-view" class="bg-white p-8 rounded-xl shadow-lg">
             <div class="flex justify-between items-center mb-6">
                 <div><h2 class="text-2xl font-bold">Panel de Gestión</h2><p class="text-slate-500">Supervisa los registros y gestiona tu equipo</p></div>
-                <button data-action="logout" class="btn-danger btn-icon-text"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
+                <button data-action="logout" class="btn btn-danger btn-icon-text"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
             </div>
             <div class="mb-6 border-b border-slate-200">
                 <nav class="flex space-x-4" aria-label="Tabs">
@@ -271,7 +257,7 @@
                 <div class="flex flex-wrap gap-4 mb-6 items-center bg-slate-50 p-4 rounded-lg">
                     <div><label class="block text-sm font-medium text-slate-700">Empleado</label><select id="employee-select" class="form-input"></select></div>
                     <div><label for="month-select" class="block text-sm font-medium text-slate-700">Mes</label><input type="month" id="month-select" class="form-input"></div>
-                    <div class="self-end"><button data-action="generate-pdf" class="btn-primary btn-icon-text"><i class="fas fa-file-pdf"></i> Generar PDF</button></div>
+                    <div class="self-end"><button data-action="generate-pdf" class="btn btn-primary btn-icon-text"><i class="fas fa-file-pdf"></i> Generar PDF</button></div>
                 </div>
                 <h3 class="text-xl font-semibold mb-2">Registros de <span id="manager-employee-name"></span> para <span id="manager-month-display"></span></h3>
                 <div class="overflow-x-auto bg-slate-50 p-4 rounded-lg">
@@ -283,7 +269,7 @@
             <div id="employees-content" class="hidden">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-xl font-semibold">Gestión de Empleados</h3>
-                    <button data-action="show-employee-form" class="btn-primary btn-icon-text"><i class="fas fa-plus"></i> Añadir Empleado</button>
+                    <button data-action="show-employee-form" class="btn btn-primary btn-icon-text"><i class="fas fa-plus"></i> Añadir Empleado</button>
                 </div>
                 <div id="employee-form-container" class="hidden bg-slate-50 p-4 rounded-lg mb-4">
                     <h3 id="form-title" class="text-lg font-bold mb-4">Añadir Nuevo Empleado</h3>
@@ -295,8 +281,8 @@
                         <div class="mt-4"><label for="employee-role-select" class="block text-sm font-medium text-slate-700">Rol</label><select id="employee-role-select" class="form-input"><option value="employee">Empleado</option><option value="manager">Administrador</option></select></div>
                         <p id="modal-error" class="text-red-500 text-sm mt-2 h-4"></p>
                         <div class="mt-6 flex justify-end gap-3">
-                            <button type="button" data-action="hide-employee-form" class="btn-secondary btn-icon-text"><i class="fas fa-times"></i> Cancelar</button>
-                            <button type="submit" class="btn-primary btn-icon-text"><i class="fas fa-save"></i> Guardar</button>
+                            <button type="button" data-action="hide-employee-form" class="btn btn-secondary btn-icon-text"><i class="fas fa-times"></i> Cancelar</button>
+                            <button type="submit" class="btn btn-primary btn-icon-text"><i class="fas fa-save"></i> Guardar</button>
                         </div>
                     </form>
                 </div>
@@ -314,7 +300,7 @@
                                 <div><label for="company-address" class="block text-sm font-medium text-slate-700">Dirección</label><input type="text" id="company-address" class="form-input"></div>
                                 <div class="text-right flex items-center justify-end">
                                     <span id="company-details-success" class="text-green-600 text-sm mr-4 hidden">¡Datos guardados!</span>
-                                    <button type="submit" class="btn-primary btn-icon-text"><i class="fas fa-save"></i> Guardar Datos</button>
+                                    <button type="submit" class="btn btn-primary btn-icon-text"><i class="fas fa-save"></i> Guardar Datos</button>
                                 </div>
                             </div>
                         </form>
@@ -324,9 +310,9 @@
                         <div class="flex items-center gap-4">
                             <img id="logo-preview" src="https://placehold.co/100x100/6366f1/ffffff?text=Logo" class="h-20 w-20 object-contain border p-1 rounded-md bg-white">
                             <div>
-                                <label for="logo-upload" class="btn-secondary btn-icon-text cursor-pointer"><i class="fas fa-upload"></i> Seleccionar Logo</label>
+                                <label for="logo-upload" class="btn btn-secondary btn-icon-text cursor-pointer"><i class="fas fa-upload"></i> Seleccionar Logo</label>
                                 <input type="file" id="logo-upload" class="hidden" accept="image/*">
-                                <button data-action="save-logo" id="save-logo-btn" class="btn-primary btn-icon-text mt-2 hidden"><i class="fas fa-save"></i> Guardar Logo</button>
+                                <button data-action="save-logo" id="save-logo-btn" class="btn btn-primary btn-icon-text mt-2 hidden"><i class="fas fa-save"></i> Guardar Logo</button>
                                 <p id="logo-save-success" class="text-green-600 text-sm mt-2 hidden">¡Logo guardado!</p>
                                 <p id="logo-save-error" class="text-red-500 text-sm mt-2 hidden"></p>
                                 <p class="text-xs text-slate-500 mt-2">Sube un archivo de imagen (JPG, PNG, etc.)</p>
@@ -338,7 +324,660 @@
         </div>
     </div>
     <script type="module">
-        // (El JavaScript permanece igual, solo se actualiza el HTML con los estilos de los botones)
+        // (El código JavaScript no ha sido modificado)
+        const SUPABASE_URL = 'https://thzalqqhxlqpnaswzraw.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoemFscXFoeGxxcG5hc3d6cmF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4ODg2MjcsImV4cCI6MjA3MTQ2NDYyN30.tworaVCWL7suWJqtbR7mIXEivdZaM3lBVtgJLgwRvYc';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const views = { loading: document.getElementById('loading-view'), login: document.getElementById('login-view'), employee: document.getElementById('employee-view'), manager: document.getElementById('manager-view') };
+        let currentUser = null, currentPin = '', activeShiftId = null, signaturePad, editingShiftId = null, tempLogoData = null;
+        let shiftsSubscription = null, usersSubscription = null;
+
+        const showView = (viewName) => { Object.values(views).forEach(v => v.style.display = 'none'); views[viewName].style.display = 'block'; };
+        const updatePinDisplay = () => { document.getElementById('pin-display').textContent = '*'.repeat(currentPin.length); };
+
+        const testSupabaseConnection = async () => {
+            try {
+                console.log("Probando conexión a Supabase...");
+                const { data, error } = await supabase.from('users').select('id').limit(1);
+                if (error) throw new Error(`Fallo en la conexión a Supabase: ${error.message}`);
+                console.log("Conexión a Supabase exitosa, datos recibidos:", data);
+                return true;
+            } catch (err) {
+                console.error("Error en testSupabaseConnection:", err);
+                throw err;
+            }
+        };
+
+        const setupInitialData = async () => {
+            try {
+                console.log("Iniciando setupInitialData...");
+                const { data: session } = await supabase.auth.getSession();
+                if (!session.session) throw new Error("No hay sesión activa para inicializar datos.");
+                const { data, error } = await supabase.from('users').select('id, role, auth_id').eq('role', 'manager').eq('auth_id', session.session.user.id);
+                if (error) throw new Error(`Error al verificar usuarios administradores: ${error.message}`);
+                console.log("Usuarios administradores encontrados:", data?.length || 0, "Datos:", data);
+                if (!data || data.length === 0) {
+                    console.log("No se encontraron administradores, intentando crear uno...");
+                    const { error: insertError } = await supabase.from('users').insert([{ name: "Admin", pin: "0000", role: "manager", auth_id: session.session.user.id }]);
+                    if (insertError) throw new Error(`Error al crear usuario administrador: ${insertError.message}`);
+                    console.log("Usuario administrador creado exitosamente.");
+                }
+            } catch (err) {
+                console.error("Error en setupInitialData:", err);
+                throw err;
+            }
+        };
+
+        const loadCompanyLogoForLogin = async () => {
+            try {
+                console.log("Cargando logo de la empresa...");
+                const { data, error } = await supabase.from('company_details').select('logo').limit(1).single();
+                if (error) {
+                    console.error("Error cargando logo:", error);
+                    return;
+                }
+                if (data && data.logo) {
+                    document.getElementById('login-logo').src = data.logo;
+                    console.log("Logo cargado exitosamente.");
+                }
+            } catch (err) {
+                console.error("Error inesperado en loadCompanyLogoForLogin:", err);
+            }
+        };
+
+        const enterPin = (num) => { 
+            if (currentPin.length < 4) { 
+                currentPin += num; 
+                document.getElementById('pin-input').value = currentPin;
+                updatePinDisplay(); 
+            } 
+        };
+
+        const clearPin = () => { 
+            currentPin = ''; 
+            document.getElementById('pin-input').value = '';
+            updatePinDisplay(); 
+            document.getElementById('login-error').textContent = ''; 
+        };
+
+        const login = async () => {
+            const loginError = document.getElementById('login-error');
+            loginError.textContent = '';
+            const email = document.getElementById('email-input').value.trim();
+            if (!email || currentPin.length !== 4) { 
+                loginError.textContent = 'Introduce un correo válido y un PIN de 4 dígitos.'; 
+                return; 
+            }
+            try {
+                console.log("Intentando login con email:", email, "y PIN:", currentPin);
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password: currentPin });
+                if (error) {
+                    console.error("Error en login:", error);
+                    loginError.textContent = `Error: ${error.message}`;
+                    clearPin();
+                    return;
+                }
+                const { user } = data;
+                const { data: userData, error: userError } = await supabase.from('users').select('*').eq('auth_id', user.id).single();
+                if (userError || !userData) {
+                    console.error("Error al obtener datos del usuario:", userError);
+                    loginError.textContent = 'Usuario no encontrado en la base de datos.';
+                    clearPin();
+                    await supabase.auth.signOut();
+                    return;
+                }
+                console.log("Usuario autenticado:", userData);
+                currentUser = userData;
+                if (currentUser.role === 'manager') { 
+                    showView('manager'); 
+                    await loadManagerView(); 
+                } else { 
+                    showView('employee'); 
+                    await loadEmployeeView(); 
+                }
+            } catch (err) {
+                console.error("Error inesperado en login:", err);
+                loginError.textContent = 'Error inesperado al iniciar sesión. Intenta de nuevo.';
+                clearPin();
+            }
+        };
+
+        const logout = async () => {
+            if (shiftsSubscription) await supabase.removeChannel(shiftsSubscription);
+            if (usersSubscription) await supabase.removeChannel(usersSubscription);
+            shiftsSubscription = null;
+            usersSubscription = null;
+            currentUser = null; 
+            currentPin = ''; 
+            activeShiftId = null;
+            document.getElementById('email-input').value = '';
+            updatePinDisplay();
+            await supabase.auth.signOut();
+            showView('login');
+        };
+
+        const loadEmployeeView = async () => {
+            document.getElementById('employee-name').textContent = currentUser.name;
+            const now = new Date();
+            const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            document.getElementById('current-month').textContent = now.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
+            listenForShifts(currentUser.id, monthYear, 'employee');
+            updateSignatureButtonState(currentUser.id, monthYear);
+        };
+
+        const listenForShifts = async (userId, monthYear, viewType) => {
+            if (shiftsSubscription) {
+                await supabase.removeChannel(shiftsSubscription);
+                shiftsSubscription = null;
+            }
+
+            const fetchAndRender = async () => {
+                try {
+                    const [year, month] = monthYear.split('-').map(Number);
+                    const startDate = new Date(year, month - 1, 1).toISOString();
+                    const endDate = new Date(year, month, 1).toISOString();
+                    console.log(`Cargando turnos para userId: ${userId}, mes: ${monthYear}`);
+                    const { data, error } = await supabase
+                        .from('shifts')
+                        .select('*')
+                        .eq('user_id', userId)
+                        .gte('start_time', startDate)
+                        .lt('start_time', endDate);
+                    if (error) {
+                        console.error("Error fetching shifts:", error);
+                        document.getElementById('clock-status').textContent = `Error al cargar turnos: ${error.message}`;
+                        document.getElementById('clock-status').classList.add('text-red-500');
+                        return;
+                    }
+                    console.log("Turnos cargados:", data);
+                    data.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
+                    if (viewType === 'employee') {
+                        updateEmployeeShiftsUI(data);
+                    } else {
+                        updateManagerShiftsUI(data);
+                    }
+                } catch (err) {
+                    console.error("Error inesperado en fetchAndRender:", err);
+                    document.getElementById('clock-status').textContent = 'Error inesperado al cargar turnos.';
+                    document.getElementById('clock-status').classList.add('text-red-500');
+                }
+            };
+
+            await fetchAndRender();
+
+            shiftsSubscription = supabase
+                .channel(`public:shifts:user_id=eq.${userId}`)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'shifts',
+                        filter: `user_id=eq.${userId}`,
+                    },
+                    (payload) => {
+                        console.log("Cambio detectado en turnos:", payload);
+                        fetchAndRender();
+                    }
+                )
+                .subscribe((status) => {
+                    console.log("Estado de suscripción:", status);
+                });
+        };
+
+        const updateEmployeeShiftsUI = (shifts) => {
+            let totalMinutes = 0;
+            activeShiftId = null;
+            shifts.forEach(shift => {
+                if (shift.status === 'completed' && shift.end_time) totalMinutes += (new Date(shift.end_time) - new Date(shift.start_time)) / 60000;
+                else if (shift.status === 'in-progress') activeShiftId = shift.id;
+            });
+            updateEmployeeShiftsTable(shifts);
+            updateClockButtons();
+            document.getElementById('total-hours').textContent = (totalMinutes / 60).toFixed(2);
+            const monthYear = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+            updateSignatureButtonState(currentUser.id, monthYear);
+        };
+
+        const updateEmployeeShiftsTable = (shifts) => {
+            const table = document.querySelector('#employee-view table');
+            const tableBody = table.querySelector('tbody');
+            const headers = `<thead><tr class="border-b"><th class="p-2">Fecha</th><th class="p-2">Entrada</th><th class="p-2">Salida</th><th class="p-2">Total Horas</th><th class="p-2">Estado</th><th class="p-2"></th></tr></thead>`;
+            if (shifts.length === 0) { tableBody.innerHTML = '<tr><td colspan="6" class="p-2 text-center text-slate-500">No hay registros este mes.</td></tr>'; table.querySelector('thead').innerHTML = headers; return; }
+            const rows = shifts.map(shift => {
+                const start = new Date(shift.start_time);
+                const end = shift.end_time ? new Date(shift.end_time) : null;
+                const totalHours = end ? ((end - start) / 3600000).toFixed(2) : 'En curso';
+                const statusMap = { completed: '<span class="text-green-600">Aprobado</span>', pending_approval: '<span class="text-yellow-600">Pendiente</span>', in_progress: '<span class="text-blue-600">En curso</span>' };
+                const editButton = shift.status !== 'in-progress' ? `<button data-action="show-shift-form" data-shift-id="${shift.id}" class="text-blue-600 hover:text-blue-800"><i class="fas fa-edit"></i> Editar</button>` : '';
+                return `<tr class="${shift.status === 'pending_approval' ? 'pending-approval' : ''} border-b last:border-b-0"><td class="p-2">${start.toLocaleDateString('es-ES')}</td><td class="p-2">${start.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</td><td class="p-2">${end ? end.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) : '-'}</td><td class="p-2">${totalHours}</td><td class="p-2">${statusMap[shift.status] || ''}</td><td class="p-2 text-right">${editButton}</td></tr>`;
+            }).join('');
+            tableBody.innerHTML = rows;
+            table.querySelector('thead').innerHTML = headers;
+        };
+
+        const updateClockButtons = () => {
+            const clockInBtn = document.getElementById('clock-in-btn'), clockOutBtn = document.getElementById('clock-out-btn'), clockStatus = document.getElementById('clock-status');
+            clockInBtn.disabled = !!activeShiftId; clockOutBtn.disabled = !activeShiftId;
+            clockStatus.textContent = activeShiftId ? 'Turno en progreso.' : '';
+            clockStatus.classList.toggle('text-green-600', !!activeShiftId);
+            clockStatus.classList.remove('text-red-500');
+        };
+
+        const clockIn = async () => {
+            if (!activeShiftId) {
+                try {
+                    console.log("Iniciando turno para userId:", currentUser.id);
+                    const { data, error } = await supabase
+                        .from('shifts')
+                        .insert([{ user_id: currentUser.id, start_time: new Date().toISOString(), status: 'in-progress' }])
+                        .select();
+                    if (error) {
+                        console.error("Error en clockIn:", error);
+                        document.getElementById('clock-status').textContent = `Error al iniciar turno: ${error.message}`;
+                        document.getElementById('clock-status').classList.add('text-red-500');
+                        return;
+                    }
+                    console.log("Turno iniciado:", data);
+                    activeShiftId = data[0].id;
+                    updateClockButtons();
+                    const monthYear = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+                    listenForShifts(currentUser.id, monthYear, 'employee');
+                } catch (err) {
+                    console.error("Error inesperado en clockIn:", err);
+                    document.getElementById('clock-status').textContent = 'Error inesperado al iniciar turno.';
+                    document.getElementById('clock-status').classList.add('text-red-500');
+                }
+            }
+        };
+
+        const clockOut = async () => {
+            if (activeShiftId) {
+                try {
+                    console.log("Finalizando turno con ID:", activeShiftId);
+                    const { error } = await supabase
+                        .from('shifts')
+                        .update({ end_time: new Date().toISOString(), status: 'completed' })
+                        .eq('id', activeShiftId);
+                    if (error) {
+                        console.error("Error en clockOut:", error);
+                        document.getElementById('clock-status').textContent = `Error al finalizar turno: ${error.message}`;
+                        document.getElementById('clock-status').classList.add('text-red-500');
+                        return;
+                    }
+                    console.log("Turno finalizado exitosamente.");
+                    activeShiftId = null;
+                    updateClockButtons();
+                    const monthYear = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+                    listenForShifts(currentUser.id, monthYear, 'employee');
+                } catch (err) {
+                    console.error("Error inesperado en clockOut:", err);
+                    document.getElementById('clock-status').textContent = 'Error inesperado al finalizar turno.';
+                    document.getElementById('clock-status').classList.add('text-red-500');
+                }
+            }
+        };
+
+        const updateSignatureButtonState = async (userId, monthYear) => {
+            const approveBtn = document.getElementById('approve-hours-btn'), signedMsg = document.getElementById('signed-message');
+            approveBtn.classList.add('hidden'); signedMsg.classList.add('hidden');
+            const { data } = await supabase.from('signatures').select('id').eq('user_id', userId).eq('month_year', monthYear).single();
+            if (data) { signedMsg.classList.remove('hidden'); return; }
+            const today = new Date(), [year, month] = monthYear.split('-').map(Number);
+            if (today >= new Date(year, month, 0)) approveBtn.classList.remove('hidden');
+        };
+
+        const openSignatureModal = () => {
+            if (!window.SignaturePad) return;
+            document.getElementById('signature-container').classList.remove('hidden');
+            const canvas = document.getElementById('signature-canvas'), ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio; canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            signaturePad = new window.SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
+        };
+
+        const hideSignaturePad = () => { document.getElementById('signature-container').classList.add('hidden'); if (signaturePad) signaturePad.clear(); signaturePad = null; };
+        const clearSignature = () => { if (signaturePad) signaturePad.clear(); };
+
+        const saveSignature = async () => {
+            const signatureError = document.getElementById('signature-error');
+            signatureError.textContent = '';
+            if (!signaturePad || signaturePad.isEmpty()) { signatureError.textContent = "Por favor, proporciona una firma."; return; }
+            const now = new Date(), monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            const { error } = await supabase.from('signatures').insert([{ user_id: currentUser.id, month_year: monthYear, signature_data: signaturePad.toDataURL(), signed_at: now.toISOString() }]);
+            if (!error) { hideSignaturePad(); updateSignatureButtonState(currentUser.id, monthYear); }
+            else {
+                console.error("Error al guardar firma:", error);
+                signatureError.textContent = `Error al guardar: ${error.message}`;
+            }
+        };
+
+        const showShiftForm = async (shiftId = null) => {
+            editingShiftId = shiftId;
+            document.getElementById('shift-form-container').classList.remove('hidden');
+            const form = document.getElementById('shift-form');
+            form.reset();
+            document.getElementById('shift-modal-error').textContent = '';
+            document.getElementById('shift-form-title').textContent = editingShiftId ? 'Editar Fichaje' : 'Añadir Fichaje Olvidado';
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('shift-date-start').value = today;
+            document.getElementById('shift-date-end').value = today;
+
+            if (editingShiftId) {
+                const { data } = await supabase.from('shifts').select('*').eq('id', editingShiftId).single();
+                if (data) {
+                    const start = new Date(data.start_time), end = new Date(data.end_time);
+                    document.getElementById('shift-date-start').value = start.toISOString().split('T')[0];
+                    document.getElementById('start-time').value = start.toTimeString().substring(0, 5);
+                    document.getElementById('shift-date-end').value = end.toISOString().split('T')[0];
+                    document.getElementById('end-time').value = end.toTimeString().substring(0, 5);
+                }
+            }
+        };
+
+        const hideShiftForm = () => { document.getElementById('shift-form-container').classList.add('hidden'); editingShiftId = null; };
+
+        const saveShift = async () => {
+            const startDate = document.getElementById('shift-date-start').value, startTime = document.getElementById('start-time').value;
+            const endDate = document.getElementById('shift-date-end').value, endTime = document.getElementById('end-time').value;
+            const modalError = document.getElementById('shift-modal-error');
+            if (!startDate || !startTime || !endDate || !endTime) { modalError.textContent = 'Todos los campos son obligatorios.'; return; }
+            const startDateTime = new Date(`${startDate}T${startTime}`), endDateTime = new Date(`${endDate}T${endTime}`);
+            if (endDateTime <= startDateTime) { modalError.textContent = 'La hora de salida debe ser posterior a la de entrada.'; return; }
+            const shiftData = { user_id: currentUser.id, start_time: startDateTime.toISOString(), end_time: endDateTime.toISOString(), status: 'pending_approval' };
+            const { error } = editingShiftId ? await supabase.from('shifts').update(shiftData).eq('id', editingShiftId) : await supabase.from('shifts').insert(shiftData);
+            if (!error) hideShiftForm(); else { console.error("Error al guardar turno:", error); modalError.textContent = `Error al guardar: ${error.message}`; }
+        };
+
+        const loadManagerView = async () => {
+            document.getElementById('month-select').value = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+            await populateEmployeeDropdown();
+            listenForEmployees();
+            await loadCompanySettings();
+            updateManagerShiftView();
+        };
+
+        const switchTab = (tabName) => { ['reports','employees','settings'].forEach(t => { document.getElementById(`${t}-content`).style.display = t === tabName ? 'block' : 'none'; document.getElementById(`tab-${t}`).classList.toggle('tab-active', t === tabName); }); };
+
+        const updateManagerShiftView = () => {
+            const employeeSelect = document.getElementById('employee-select');
+            if (!employeeSelect.value) { document.getElementById('manager-shifts-table-body').innerHTML = '<tr><td colspan="5" class="p-2 text-center text-slate-500">Selecciona un empleado.</td></tr>'; return; }
+            const employeeId = employeeSelect.value, monthYear = document.getElementById('month-select').value;
+            const [year, month] = monthYear.split('-');
+            document.getElementById('manager-employee-name').textContent = employeeSelect.options[employeeSelect.selectedIndex].text;
+            document.getElementById('manager-month-display').textContent = new Date(year, month - 1).toLocaleString('es-ES', { month: 'long', year: 'numeric' });
+            listenForShifts(employeeId, monthYear, 'manager');
+            updateManagerSignatureDisplay(employeeId, monthYear);
+        };
+
+        const updateManagerShiftsUI = (shifts) => {
+            const table = document.querySelector('#manager-view table');
+            const tableBody = table.querySelector('tbody');
+            const headers = `<thead><tr class="border-b"><th class="p-2">Fecha</th><th class="p-2">Entrada</th><th class="p-2">Salida</th><th class="p-2">Total Horas</th><th class="p-2">Acciones</th></tr></thead>`;
+            let totalMinutes = 0;
+            if (shifts.length === 0) { tableBody.innerHTML = '<tr><td colspan="5" class="p-2 text-center text-slate-500">No hay registros.</td></tr>'; table.querySelector('thead').innerHTML = headers; return; }
+            const rows = shifts.map(shift => {
+                const start = new Date(shift.start_time), end = shift.end_time ? new Date(shift.end_time) : null;
+                const totalHours = end ? ((end - start) / 3600000).toFixed(2) : 'En curso';
+                const actions = `
+                    <div class="flex gap-2">
+                        ${shift.status === 'pending_approval' ? `
+                            <button data-action="approve-shift" data-shift-id="${shift.id}" class="btn btn-success btn-sm"><i class="fas fa-check"></i> Aprobar</button>
+                            <button data-action="reject-shift" data-shift-id="${shift.id}" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Rechazar</button>
+                        ` : ''}
+                        <button data-action="delete-shift" data-shift-id="${shift.id}" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+                if (shift.status === 'completed' && shift.end_time) totalMinutes += (end - start) / 60000;
+                return `<tr class="${shift.status === 'pending_approval' ? 'pending-approval' : ''} border-b last:border-b-0"><td class="p-2">${start.toLocaleDateString('es-ES')}</td><td class="p-2">${start.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</td><td class="p-2">${end ? end.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) : '-'}</td><td class="p-2">${totalHours}</td><td class="p-2">${actions}</td></tr>`;
+            }).join('');
+            tableBody.innerHTML = rows;
+            table.querySelector('thead').innerHTML = headers;
+            document.getElementById('manager-total-hours').textContent = (totalMinutes / 60).toFixed(2);
+        };
+
+        const updateManagerSignatureDisplay = async (userId, monthYear) => {
+            const display = document.getElementById('manager-signature-display');
+            const { data } = await supabase.from('signatures').select('*').eq('user_id', userId).eq('month_year', monthYear).single();
+            if (data) {
+                display.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <img src="${data.signature_data}" class="w-48 h-24 border rounded-md p-1 bg-white">
+                        <div>
+                            <p class="font-semibold text-green-600">Resumen de horas firmado por el empleado.</p>
+                            <p class="text-sm text-slate-500">Fecha de firma: ${new Date(data.signed_at).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' })}</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                display.innerHTML = '<p class="text-slate-500">El resumen de horas para este mes aún no ha sido firmado.</p>';
+            }
+        };
+
+        const approveShift = async (shiftId) => {
+            if (!confirm('¿Estás seguro de que quieres aprobar este fichaje?')) return;
+            const { error } = await supabase.from('shifts').update({ status: 'completed' }).eq('id', shiftId);
+            if (error) console.error("Error al aprobar fichaje:", error);
+            else console.log("Fichaje aprobado exitosamente.");
+        };
+        const rejectShift = async (shiftId) => {
+            if (!confirm('¿Estás seguro de que quieres rechazar este fichaje?')) return;
+            const { error } = await supabase.from('shifts').delete().eq('id', shiftId);
+            if (error) console.error("Error al rechazar fichaje:", error);
+            else console.log("Fichaje rechazado y eliminado exitosamente.");
+        };
+        const deleteShift = async (shiftId) => {
+            if (!confirm('¿Estás seguro de que quieres eliminar este fichaje?')) return;
+            const { error } = await supabase.from('shifts').delete().eq('id', shiftId);
+            if (error) console.error("Error al eliminar fichaje:", error);
+            else console.log("Fichaje eliminado exitosamente.");
+        };
+
+        const populateEmployeeDropdown = async () => {
+            const employeeSelect = document.getElementById('employee-select');
+            const { data, error } = await supabase.from('users').select('id, name, role').order('name');
+            if (error) { console.error("Error al cargar empleados:", error); return; }
+            const options = data.map(user => `<option value="${user.auth_id}">${user.name}${user.role === 'manager' ? ' (Admin)' : ''}</option>`).join('');
+            employeeSelect.innerHTML = `<option value="">Selecciona un empleado...</option>` + options;
+            if (data.length > 0) employeeSelect.value = data[0].auth_id;
+        };
+
+        const listenForEmployees = async () => {
+            if (usersSubscription) await supabase.removeChannel(usersSubscription);
+            usersSubscription = supabase.channel('public:users').on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, (payload) => {
+                console.log("Cambio detectado en usuarios:", payload);
+                populateEmployeeDropdown();
+            }).subscribe();
+        };
+        
+        const showEmployeeForm = async (userId = null) => {
+            document.getElementById('form-title').textContent = userId ? 'Editar Empleado' : 'Añadir Nuevo Empleado';
+            document.getElementById('editing-user-id').value = userId || '';
+            document.getElementById('employee-form-container').classList.remove('hidden');
+            document.getElementById('employee-form').reset();
+            if (userId) {
+                const { data } = await supabase.from('users').select('*').eq('auth_id', userId).single();
+                if (data) {
+                    document.getElementById('employee-name-input').value = data.name;
+                    document.getElementById('employee-email-input').value = data.email || '';
+                    document.getElementById('employee-pin-input').value = data.pin;
+                    document.getElementById('employee-role-select').value = data.role;
+                }
+            }
+        };
+
+        const hideEmployeeForm = () => { document.getElementById('employee-form-container').classList.add('hidden'); };
+
+        const saveEmployee = async (event) => {
+            event.preventDefault();
+            const form = event.target;
+            const id = form.querySelector('#editing-user-id').value;
+            const name = form.querySelector('#employee-name-input').value;
+            const email = form.querySelector('#employee-email-input').value;
+            const pin = form.querySelector('#employee-pin-input').value;
+            const role = form.querySelector('#employee-role-select').value;
+            const modalError = document.getElementById('modal-error');
+            modalError.textContent = '';
+            
+            if (pin.length !== 4) { modalError.textContent = "El PIN debe tener 4 dígitos."; return; }
+
+            const userData = { name, email, pin, role, auth_id: id || null };
+
+            try {
+                if (id) {
+                    const { error } = await supabase.from('users').update(userData).eq('auth_id', id);
+                    if (error) throw error;
+                } else {
+                    const { error } = await supabase.from('users').insert(userData);
+                    if (error) throw error;
+                }
+                hideEmployeeForm();
+                await populateEmployeeDropdown();
+            } catch (err) {
+                console.error("Error al guardar empleado:", err);
+                modalError.textContent = `Error: ${err.message}`;
+            }
+        };
+
+        const loadCompanySettings = async () => {
+            const { data, error } = await supabase.from('company_details').select('*').limit(1).single();
+            if (error && error.code !== 'PGRST116') { console.error("Error al cargar detalles de la empresa:", error); return; }
+            if (data) {
+                document.getElementById('company-name').value = data.name || '';
+                document.getElementById('company-cif').value = data.cif || '';
+                document.getElementById('company-address').value = data.address || '';
+                if (data.logo) document.getElementById('logo-preview').src = data.logo;
+            }
+        };
+
+        const saveCompanyDetails = async (event) => {
+            event.preventDefault();
+            const name = document.getElementById('company-name').value;
+            const cif = document.getElementById('company-cif').value;
+            const address = document.getElementById('company-address').value;
+            const { error } = await supabase.from('company_details').upsert({ id: 1, name, cif, address });
+            if (!error) document.getElementById('company-details-success').classList.remove('hidden');
+            else console.error("Error al guardar detalles de la empresa:", error);
+        };
+
+        const handleLogoUpload = (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+            tempLogoData = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('logo-preview').src = e.target.result;
+                document.getElementById('save-logo-btn').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        };
+
+        const saveLogo = async () => {
+            if (!tempLogoData) return;
+            const fileName = `logo_${Date.now()}.${tempLogoData.name.split('.').pop()}`;
+            const { data, error } = await supabase.storage.from('company_logos').upload(fileName, tempLogoData, { upsert: true });
+            if (error) {
+                console.error("Error al subir logo:", error);
+                document.getElementById('logo-save-error').textContent = `Error: ${error.message}`;
+                document.getElementById('logo-save-error').classList.remove('hidden');
+                return;
+            }
+            const { data: urlData } = supabase.storage.from('company_logos').getPublicUrl(fileName);
+            const { error: dbError } = await supabase.from('company_details').upsert({ id: 1, logo: urlData.publicUrl });
+            if (!dbError) {
+                document.getElementById('logo-save-success').classList.remove('hidden');
+                document.getElementById('logo-save-error').classList.add('hidden');
+                document.getElementById('save-logo-btn').classList.add('hidden');
+            } else {
+                console.error("Error al guardar URL del logo:", dbError);
+                document.getElementById('logo-save-error').textContent = `Error: ${dbError.message}`;
+                document.getElementById('logo-save-error').classList.remove('hidden');
+            }
+        };
+
+        const setupEventListeners = () => {
+            document.addEventListener('click', async (e) => {
+                const action = e.target.closest('[data-action]')?.dataset.action;
+                const value = e.target.closest('[data-action]')?.dataset.value;
+                const shiftId = e.target.closest('[data-shift-id]')?.dataset.shiftId;
+                const tab = e.target.closest('[data-tab]')?.dataset.tab;
+
+                if (!action) return;
+
+                switch (action) {
+                    case 'enter-pin': enterPin(value); break;
+                    case 'clear-pin': clearPin(); break;
+                    case 'login': await login(); break;
+                    case 'logout': await logout(); break;
+                    case 'clock-in': await clockIn(); break;
+                    case 'clock-out': await clockOut(); break;
+                    case 'show-shift-form': await showShiftForm(shiftId); break;
+                    case 'hide-shift-form': hideShiftForm(); break;
+                    case 'open-signature-modal': openSignatureModal(); break;
+                    case 'clear-signature': clearSignature(); break;
+                    case 'cancel-signature': hideSignaturePad(); break;
+                    case 'save-signature': await saveSignature(); break;
+                    case 'switch-tab': switchTab(tab); break;
+                    case 'generate-pdf': console.log("Generar PDF..."); break;
+                    case 'approve-shift': await approveShift(shiftId); break;
+                    case 'reject-shift': await rejectShift(shiftId); break;
+                    case 'delete-shift': await deleteShift(shiftId); break;
+                    case 'show-employee-form': await showEmployeeForm(); break;
+                    case 'hide-employee-form': hideEmployeeForm(); break;
+                    case 'save-logo': await saveLogo(); break;
+                }
+            });
+
+            document.getElementById('shift-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                saveShift();
+            });
+
+            document.getElementById('employee-form').addEventListener('submit', saveEmployee);
+            document.getElementById('company-details-form').addEventListener('submit', saveCompanyDetails);
+            document.getElementById('logo-upload').addEventListener('change', handleLogoUpload);
+            document.getElementById('employee-select').addEventListener('change', updateManagerShiftView);
+            document.getElementById('month-select').addEventListener('change', updateManagerShiftView);
+            
+            window.jsPDF = window.jspdf.jsPDF;
+        };
+
+        const init = async () => {
+            showView('loading');
+            try {
+                await testSupabaseConnection();
+                await setupInitialData();
+                await loadCompanyLogoForLogin();
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    const { data: userData } = await supabase.from('users').select('*').eq('auth_id', session.user.id).single();
+                    if (userData) {
+                        currentUser = userData;
+                        if (currentUser.role === 'manager') {
+                            showView('manager');
+                            await loadManagerView();
+                        } else {
+                            showView('employee');
+                            await loadEmployeeView();
+                        }
+                    } else {
+                        await supabase.auth.signOut();
+                        showView('login');
+                    }
+                } else {
+                    showView('login');
+                }
+            } catch (err) {
+                console.error("Fallo de inicialización:", err);
+                document.getElementById('loading-message').textContent = 'Error al cargar la aplicación. Por favor, revisa la consola para más detalles.';
+                document.getElementById('loading-message').classList.add('text-red-500');
+            }
+            setupEventListeners();
+        };
+
+        init();
     </script>
 </body>
 </html>
