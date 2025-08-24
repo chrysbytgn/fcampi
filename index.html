@@ -89,15 +89,32 @@
             const showView = (viewName) => { Object.values(views).forEach(v => v.style.display = 'none'); views[viewName].style.display = 'block'; };
             const updatePinDisplay = () => { document.getElementById('pin-display').textContent = '*'.repeat(currentPin.length); };
 
+            // Función para probar la conexión a Supabase
+            const testSupabaseConnection = async () => {
+                try {
+                    console.log("Probando conexión a Supabase...");
+                    const { data, error } = await supabase.from('users').select('id').limit(1);
+                    if (error) {
+                        console.error("Error en la prueba de conexión:", error);
+                        throw new Error(`Fallo en la conexión a Supabase: ${error.message}`);
+                    }
+                    console.log("Conexión a Supabase exitosa, datos recibidos:", data);
+                    return true;
+                } catch (err) {
+                    console.error("Error en testSupabaseConnection:", err);
+                    throw err;
+                }
+            };
+
             const setupInitialData = async () => {
                 try {
                     console.log("Iniciando setupInitialData...");
-                    const { data, error } = await supabase.from('users').select('id', { count: 'exact' }).eq('role', 'manager');
+                    const { data, error } = await supabase.from('users').select('id, pin, role', { count: 'exact' }).eq('role', 'manager');
                     if (error) {
                         console.error("Error al verificar usuarios administradores:", error);
                         throw new Error(`Error al verificar usuarios administradores: ${error.message}`);
                     }
-                    console.log("Usuarios administradores encontrados:", data?.length || 0);
+                    console.log("Usuarios administradores encontrados:", data?.length || 0, "Datos:", data);
                     if (!data || data.length === 0) {
                         console.log("No se encontraron administradores, intentando crear uno...");
                         const { error: insertError } = await supabase.from('users').insert([{ name: "Admin", pin: "0000", role: "manager" }]);
@@ -107,7 +124,7 @@
                         }
                         console.log("Usuario administrador creado exitosamente.");
                     } else {
-                        console.log("Usuario administrador ya existe.");
+                        console.log("Usuario administrador ya existe:", data);
                     }
                 } catch (err) {
                     console.error("Error en setupInitialData:", err);
@@ -121,7 +138,7 @@
                     const { data, error } = await supabase.from('company_details').select('logo').limit(1).single();
                     if (error) {
                         console.error("Error cargando logo:", error);
-                        return;
+                        return; // Continuar incluso si falla la carga del logo
                     }
                     if (data && data.logo) {
                         document.getElementById('login-logo').src = data.logo;
@@ -132,18 +149,55 @@
                 }
             };
 
-            const enterPin = (num) => { if (currentPin.length < 4) { currentPin += num; updatePinDisplay(); } };
-            const clearPin = () => { currentPin = ''; updatePinDisplay(); };
+            const enterPin = (num) => { 
+                if (currentPin.length < 4) { 
+                    currentPin += num; 
+                    updatePinDisplay(); 
+                } 
+            };
+
+            const clearPin = () => { 
+                currentPin = ''; 
+                updatePinDisplay(); 
+                document.getElementById('login-error').textContent = ''; 
+            };
 
             const login = async () => {
                 const loginError = document.getElementById('login-error');
                 loginError.textContent = '';
-                if (currentPin.length !== 4) { loginError.textContent = 'El PIN debe tener 4 dígitos.'; return; }
-                const { data, error } = await supabase.from('users').select('*').eq('pin', currentPin).single();
-                if (error || !data) { loginError.textContent = 'PIN incorrecto.'; clearPin(); return; }
-                currentUser = data;
-                if (currentUser.role === 'manager') { showView('manager'); await loadManagerView(); }
-                else { showView('employee'); await loadEmployeeView(); }
+                if (currentPin.length !== 4) { 
+                    loginError.textContent = 'El PIN debe tener 4 dígitos.'; 
+                    return; 
+                }
+                try {
+                    console.log("Intentando login con PIN:", currentPin);
+                    const { data, error } = await supabase.from('users').select('*').eq('pin', currentPin).single();
+                    if (error) {
+                        console.error("Error en la consulta de login:", error);
+                        loginError.textContent = `Error en la conexión: ${error.message}. Intenta de nuevo.`;
+                        clearPin();
+                        return;
+                    }
+                    if (!data) {
+                        console.log("No se encontró usuario con PIN:", currentPin);
+                        loginError.textContent = 'PIN incorrecto.';
+                        clearPin();
+                        return;
+                    }
+                    console.log("Usuario encontrado:", data);
+                    currentUser = data;
+                    if (currentUser.role === 'manager') { 
+                        showView('manager'); 
+                        await loadManagerView(); 
+                    } else { 
+                        showView('employee'); 
+                        await loadEmployeeView(); 
+                    }
+                } catch (err) {
+                    console.error("Error inesperado en login:", err);
+                    loginError.textContent = 'Error inesperado al iniciar sesión. Intenta de nuevo.';
+                    clearPin();
+                }
             };
 
             const logout = () => {
@@ -151,7 +205,9 @@
                 if (usersSubscription) supabase.removeChannel(usersSubscription);
                 shiftsSubscription = null;
                 usersSubscription = null;
-                currentUser = null; currentPin = ''; activeShiftId = null;
+                currentUser = null; 
+                currentPin = ''; 
+                activeShiftId = null;
                 updatePinDisplay();
                 showView('login');
             };
@@ -592,6 +648,10 @@
                 const loadingMessage = document.getElementById('loading-message');
                 showView('loading');
                 try {
+                    console.log("Iniciando initializeApp...");
+                    // Probar la conexión a Supabase
+                    await testSupabaseConnection();
+                    // Ejecutar inicializaciones con timeout
                     const timeoutPromise = new Promise((_, reject) => {
                         setTimeout(() => reject(new Error('Tiempo de espera agotado al cargar datos iniciales.')), 10000);
                     });
