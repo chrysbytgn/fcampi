@@ -14,148 +14,37 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f9fafb;
-            color: #1f2937;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f9fafb; color: #1f2937; }
         #employee-view, #manager-view, #login-view { display: none; }
         .signature-canvas { border: 2px dashed #e5e7eb; border-radius: 0.5rem; cursor: crosshair; }
         .pending-approval { background-color: #fefce8; }
-        .tab { 
-            padding: 0.75rem 0; 
-            font-size: 1rem; 
-            font-weight: 500;
-            color: #6b7280;
-            transition: color 0.3s ease;
-            cursor: pointer;
-        }
-        .tab-active { 
-            border-bottom: 2px solid #4b5bff; 
-            color: #4b5bff; 
-            font-weight: 600; 
-        }
+        .tab { padding: 0.75rem 0; font-size: 1rem; font-weight: 500; color: #6b7280; transition: color 0.3s ease; cursor: pointer; }
+        .tab-active { border-bottom: 2px solid #4b5bff; color: #4b5bff; font-weight: 600; }
 
-        /* Estilos mejorados para botones */
-        .btn {
-            padding: 0.75rem 1.25rem;
-            border-radius: 0.375rem;
-            font-weight: 500;
-            transition: all 0.3s ease-in-out;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            font-size: 1rem;
-            border: none;
-            cursor: pointer;
-            text-decoration: none;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .btn:active {
-            transform: translateY(0);
-            box-shadow: none;
-        }
-        button:disabled, .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            background-color: #d1d5db !important;
-            color: #6b7280 !important;
-            transform: none !important;
-            box-shadow: none !important;
-        }
+        .btn { padding: 0.75rem 1.25rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.3s ease-in-out; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 1rem; border: none; cursor: pointer; text-decoration: none; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        .btn:active { transform: translateY(0); box-shadow: none; }
+        button:disabled, .btn:disabled { opacity: 0.6; cursor: not-allowed; background-color: #d1d5db !important; color: #6b7280 !important; transform: none !important; box-shadow: none !important; }
 
-        /* Botones PIN (teclado numérico) */
-        .pin-btn {
-            background-color: #e5e7eb;
-            color: #374151;
-            min-width: 3rem;
-            height: 3rem;
-            border-radius: 9999px; /* Botones redondos */
-            font-size: 1.25rem;
-        }
-        .pin-btn:hover {
-            background-color: #d1d5db;
-        }
-        
-        /* Botón principal (azul) */
-        .btn-primary {
-            background-color: #4b5bff;
-            color: #ffffff;
-        }
-        .btn-primary:hover {
-            background-color: #3b4ddd;
-        }
+        .pin-btn { background-color: #e5e7eb; color: #374151; min-width: 3rem; height: 3rem; border-radius: 9999px; font-size: 1.25rem; }
+        .pin-btn:hover { background-color: #d1d5db; }
+        .btn-primary { background-color: #4b5bff; color: #ffffff; }
+        .btn-primary:hover { background-color: #3b4ddd; }
+        .btn-secondary { background-color: #6b7280; color: #ffffff; }
+        .btn-secondary:hover { background-color: #4b5563; }
+        .btn-success { background-color: #10b981; color: #ffffff; }
+        .btn-success:hover { background-color: #059669; }
+        .btn-danger { background-color: #ef4444; color: #ffffff; }
+        .btn-danger:hover { background-color: #dc2626; }
 
-        /* Botón secundario (gris) */
-        .btn-secondary {
-            background-color: #6b7280;
-            color: #ffffff;
-        }
-        .btn-secondary:hover {
-            background-color: #4b5563;
-        }
-
-        /* Botón de éxito (verde) */
-        .btn-success {
-            background-color: #10b981;
-            color: #ffffff;
-        }
-        .btn-success:hover {
-            background-color: #059669;
-        }
-
-        /* Botón de peligro (rojo) */
-        .btn-danger {
-            background-color: #ef4444;
-            color: #ffffff;
-        }
-        .btn-danger:hover {
-            background-color: #dc2626;
-        }
-
-        /* Estilo para botones con texto e icono */
-        .btn-icon-text {
-            min-width: 120px;
-            padding: 0.75rem 1.5rem;
-        }
-
-        /* Responsive design */
-        @media (max-width: 640px) {
-            .pin-btn {
-                min-width: 3.5rem;
-                height: 3.5rem;
-            }
-            .btn {
-                padding: 0.625rem 1rem;
-                font-size: 0.875rem;
-            }
-            .btn-icon-text {
-                min-width: 90px;
-            }
-        }
-        
-        /* Estilos adicionales */
-        .form-input {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.375rem;
-            transition: border-color 0.3s ease;
-        }
-        .form-input:focus {
-            border-color: #4b5bff;
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(75, 91, 255, 0.2);
-        }
+        .form-input { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; transition: border-color 0.3s ease; }
+        .form-input:focus { border-color: #4b5bff; outline: none; box-shadow: 0 0 0 2px rgba(75, 91, 255, 0.2); }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
     <div class="container mx-auto p-4 max-w-5xl">
         <div id="loading-view" class="text-center"><i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i><p class="mt-4 text-lg" id="loading-message">Cargando datos...</p></div>
+
         <div id="login-view">
             <div class="bg-white p-8 rounded-xl shadow-lg max-w-sm mx-auto">
                 <div class="text-center mb-6">
@@ -163,822 +52,247 @@
                     <h1 class="text-2xl font-bold">CampiClock</h1>
                     <p class="text-slate-500">Introduce tu PIN de empleado</p>
                 </div>
-                <div id="pin-display" class="bg-slate-100 text-center text-3xl font-mono tracking-widest h-16 flex items-center justify-center rounded-lg mb-4"></div>
-                <div class="grid grid-cols-3 gap-4">
-                    <button data-action="enter-pin" data-value="1" class="pin-btn">1</button>
-                    <button data-action="enter-pin" data-value="2" class="pin-btn">2</button>
-                    <button data-action="enter-pin" data-value="3" class="pin-btn">3</button>
-                    <button data-action="enter-pin" data-value="4" class="pin-btn">4</button>
-                    <button data-action="enter-pin" data-value="5" class="pin-btn">5</button>
-                    <button data-action="enter-pin" data-value="6" class="pin-btn">6</button>
-                    <button data-action="enter-pin" data-value="7" class="pin-btn">7</button>
-                    <button data-action="enter-pin" data-value="8" class="pin-btn">8</button>
-                    <button data-action="enter-pin" data-value="9" class="pin-btn">9</button>
-                    <button data-action="clear-pin" class="pin-btn bg-yellow-500 hover:bg-yellow-600 text-white"><i class="fas fa-times"></i></button>
-                    <button data-action="enter-pin" data-value="0" class="pin-btn">0</button>
-                    <button data-action="login" class="pin-btn bg-indigo-600 hover:bg-indigo-700 text-white"><i class="fas fa-check"></i></button>
+                <div class="mb-4">
+                    <label for="pin-display" class="block text-sm font-medium text-slate-700 text-center">PIN</label>
+                    <div id="pin-display" class="bg-slate-100 text-center text-3xl font-mono tracking-widest h-16 flex items-center justify-center rounded-lg mt-2"></div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <button data-action="enter-pin" data-value="1" class="pin-btn btn">1</button>
+                    <button data-action="enter-pin" data-value="2" class="pin-btn btn">2</button>
+                    <button data-action="enter-pin" data-value="3" class="pin-btn btn">3</button>
+                    <button data-action="enter-pin" data-value="4" class="pin-btn btn">4</button>
+                    <button data-action="enter-pin" data-value="5" class="pin-btn btn">5</button>
+                    <button data-action="enter-pin" data-value="6" class="pin-btn btn">6</button>
+                    <button data-action="enter-pin" data-value="7" class="pin-btn btn">7</button>
+                    <button data-action="enter-pin" data-value="8" class="pin-btn btn">8</button>
+                    <button data-action="enter-pin" data-value="9" class="pin-btn btn">9</button>
+                    <button data-action="clear-pin" class="pin-btn btn btn-secondary col-span-1"><i class="fas fa-times"></i></button>
+                    <button data-action="enter-pin" data-value="0" class="pin-btn btn">0</button>
+                    <button data-action="login" class="pin-btn btn btn-primary col-span-1"><i class="fas fa-check"></i></button>
                 </div>
                 <p id="login-error" class="text-red-500 text-center mt-4 h-4"></p>
             </div>
         </div>
+
         <div id="employee-view" class="bg-white p-8 rounded-xl shadow-lg">
-            <div class="flex justify-between items-center mb-6">
-                <div><h2 class="text-2xl font-bold">Hola, <span id="employee-name"></span></h2><p class="text-slate-500">Listo para empezar tu jornada</p></div>
-                <button data-action="logout" class="btn btn-danger btn-icon-text"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <button data-action="clock-in" id="clock-in-btn" class="btn btn-success btn-icon-text"><i class="fas fa-play-circle"></i> Iniciar Turno</button>
-                <button data-action="clock-out" id="clock-out-btn" class="btn btn-danger btn-icon-text" disabled><i class="fas fa-stop-circle"></i> Finalizar Turno</button>
-            </div>
-            <p id="clock-status" class="text-center text-slate-600 mb-6 h-6"></p>
-            <div class="flex justify-between items-center mb-2">
-                <h3 class="text-xl font-semibold">Resumen de Horas (<span id="current-month"></span>)</h3>
-                <button data-action="show-shift-form" class="btn btn-primary btn-icon-text"><i class="fas fa-plus"></i> Añadir Fichaje</button>
-            </div>
-            <div id="shift-form-container" class="hidden bg-slate-50 p-4 rounded-lg my-4">
-                <h3 id="shift-form-title" class="text-lg font-bold mb-4">Añadir Fichaje Olvidado</h3>
-                <form id="shift-form" data-netlify="false">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label for="shift-date-start" class="block text-sm font-medium text-slate-700">Fecha Entrada</label><input type="date" id="shift-date-start" required class="form-input"></div>
-                        <div><label for="shift-date-end" class="block text-sm font-medium text-slate-700">Fecha Salida</label><input type="date" id="shift-date-end" required class="form-input"></div>
-                        <div><label for="start-time" class="block text-sm font-medium text-slate-700">Hora Entrada</label><input type="time" id="start-time" required class="form-input"></div>
-                        <div><label for="end-time" class="block text-sm font-medium text-slate-700">Hora Salida</label><input type="time" id="end-time" required class="form-input"></div>
-                    </div>
-                    <p id="shift-modal-error" class="text-red-500 text-sm mt-2 h-4"></p>
-                    <div class="mt-6 flex justify-end gap-3">
-                        <button type="button" data-action="hide-shift-form" class="btn btn-secondary btn-icon-text"><i class="fas fa-times"></i> Cancelar</button>
-                        <button type="submit" class="btn btn-primary btn-icon-text"><i class="fas fa-save"></i> Solicitar Cambio</button>
-                    </div>
-                </form>
-            </div>
-            <div class="overflow-x-auto bg-slate-50 p-4 rounded-lg">
-                <table class="w-full text-left"><thead></thead><tbody id="shifts-table-body"></tbody></table>
-            </div>
-            <div class="flex justify-end items-center mt-4 gap-4">
-                <div class="text-right font-bold text-lg">Total Mensual (Aprobado): <span id="total-hours">0.00</span> horas</div>
-                <div id="signature-controls">
-                    <button data-action="open-signature-modal" id="approve-hours-btn" class="btn btn-primary btn-icon-text hidden"><i class="fas fa-signature"></i> Aprobar y Firmar</button>
-                    <div id="signed-message" class="hidden text-green-600 font-semibold flex items-center gap-2"><i class="fas fa-check-circle"></i> Resumen Firmado</div>
-                </div>
-            </div>
-        </div>
+             <div class="flex justify-between items-center mb-6">
+                 <div><h2 class="text-2xl font-bold">Hola, <span id="employee-name"></span></h2><p class="text-slate-500">Listo para empezar tu jornada</p></div>
+                 <button data-action="logout" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
+             </div>
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                 <button data-action="clock-in" id="clock-in-btn" class="btn btn-success"><i class="fas fa-play-circle"></i> Iniciar Turno</button>
+                 <button data-action="clock-out" id="clock-out-btn" class="btn btn-danger" disabled><i class="fas fa-stop-circle"></i> Finalizar Turno</button>
+             </div>
+             </div>
+
         <div id="manager-view" class="bg-white p-8 rounded-xl shadow-lg">
             <div class="flex justify-between items-center mb-6">
                 <div><h2 class="text-2xl font-bold">Panel de Gestión</h2><p class="text-slate-500">Supervisa los registros y gestiona tu equipo</p></div>
-                <button data-action="logout" class="btn btn-danger btn-icon-text"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
-            </div>
-            <div class="mb-6 border-b border-slate-200">
-                <nav class="flex space-x-4" aria-label="Tabs">
-                    <button data-action="switch-tab" data-tab="reports" id="tab-reports" class="tab tab-active"><i class="fas fa-file-alt"></i> Informes</button>
-                    <button data-action="switch-tab" data-tab="employees" id="tab-employees" class="tab"><i class="fas fa-users"></i> Empleados</button>
-                    <button data-action="switch-tab" data-tab="settings" id="tab-settings" class="tab"><i class="fas fa-cog"></i> Configuración</button>
-                </nav>
-            </div>
-            <div id="reports-content">
-                <div class="flex flex-wrap gap-4 mb-6 items-center bg-slate-50 p-4 rounded-lg">
-                    <div><label class="block text-sm font-medium text-slate-700">Empleado</label><select id="employee-select" class="form-input"></select></div>
-                    <div><label for="month-select" class="block text-sm font-medium text-slate-700">Mes</label><input type="month" id="month-select" class="form-input"></div>
-                    <div class="self-end"><button data-action="generate-pdf" class="btn btn-primary btn-icon-text"><i class="fas fa-file-pdf"></i> Generar PDF</button></div>
-                </div>
-                <h3 class="text-xl font-semibold mb-2">Registros de <span id="manager-employee-name"></span> para <span id="manager-month-display"></span></h3>
-                <div class="overflow-x-auto bg-slate-50 p-4 rounded-lg">
-                    <table class="w-full text-left"><thead></thead><tbody id="manager-shifts-table-body"></tbody></table>
-                </div>
-                <div class="text-right font-bold text-lg mt-4">Total Mensual (Aprobado): <span id="manager-total-hours">0.00</span> horas</div>
-                <div id="manager-signature-display" class="mt-6 pt-4 border-t"></div>
+                <button data-action="logout" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
             </div>
             <div id="employees-content" class="hidden">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-semibold">Gestión de Empleados</h3>
-                    <button data-action="show-employee-form" class="btn btn-primary btn-icon-text"><i class="fas fa-plus"></i> Añadir Empleado</button>
-                </div>
-                <div id="employee-form-container" class="hidden bg-slate-50 p-4 rounded-lg mb-4">
-                    <h3 id="form-title" class="text-lg font-bold mb-4">Añadir Nuevo Empleado</h3>
-                    <form id="employee-form" data-netlify="false">
-                        <input type="hidden" id="editing-user-id">
-                        <div><label for="employee-name-input" class="block text-sm font-medium text-slate-700">Nombre Completo</label><input type="text" id="employee-name-input" required class="form-input"></div>
-                        <div class="mt-4"><label for="employee-email-input" class="block text-sm font-medium text-slate-700">Correo</label><input type="email" id="employee-email-input" required class="form-input"></div>
-                        <div class="mt-4"><label for="employee-pin-input" class="block text-sm font-medium text-slate-700">PIN (4 dígitos)</label><input type="text" id="employee-pin-input" required pattern="[0-9]{4}" title="El PIN debe contener exactamente 4 dígitos." maxlength="4" class="form-input"></div>
-                        <div class="mt-4"><label for="employee-role-select" class="block text-sm font-medium text-slate-700">Rol</label><select id="employee-role-select" class="form-input"><option value="employee">Empleado</option><option value="manager">Administrador</option></select></div>
-                        <p id="modal-error" class="text-red-500 text-sm mt-2 h-4"></p>
-                        <div class="mt-6 flex justify-end gap-3">
-                            <button type="button" data-action="hide-employee-form" class="btn btn-secondary btn-icon-text"><i class="fas fa-times"></i> Cancelar</button>
-                            <button type="submit" class="btn btn-primary btn-icon-text"><i class="fas fa-save"></i> Guardar</button>
-                        </div>
-                    </form>
-                </div>
-                <div id="employee-list" class="space-y-2"></div>
+                 <div class="flex justify-between items-center mb-4">
+                     <h3 class="text-xl font-semibold">Gestión de Empleados</h3>
+                     <button data-action="show-employee-form" class="btn btn-primary"><i class="fas fa-plus"></i> Añadir Empleado</button>
+                 </div>
+                 <div id="employee-form-container" class="hidden bg-slate-50 p-4 rounded-lg mb-4">
+                     <h3 id="form-title" class="text-lg font-bold mb-4">Añadir Nuevo Empleado</h3>
+                     <form id="employee-form">
+                         <input type="hidden" id="editing-user-id">
+                         <div><label for="employee-name-input" class="block text-sm font-medium text-slate-700">Nombre Completo</label><input type="text" id="employee-name-input" required class="form-input"></div>
+                         <div class="mt-4"><label for="employee-pin-input" class="block text-sm font-medium text-slate-700">PIN (4 dígitos, debe ser único)</label><input type="text" id="employee-pin-input" required pattern="[0-9]{4}" title="El PIN debe contener exactamente 4 dígitos." maxlength="4" class="form-input"></div>
+                         <div class="mt-4"><label for="employee-role-select" class="block text-sm font-medium text-slate-700">Rol</label><select id="employee-role-select" class="form-input"><option value="employee">Empleado</option><option value="manager">Administrador</option></select></div>
+                         <p id="modal-error" class="text-red-500 text-sm mt-2 h-4"></p>
+                         <div class="mt-6 flex justify-end gap-3">
+                             <button type="button" data-action="hide-employee-form" class="btn btn-secondary"><i class="fas fa-times"></i> Cancelar</button>
+                             <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button>
+                         </div>
+                     </form>
+                 </div>
+                 <div id="employee-list" class="space-y-2"></div>
             </div>
-            <div id="settings-content" class="hidden">
-                <h3 class="text-xl font-semibold mb-4">Configuración de la Empresa</h3>
-                <div class="space-y-6">
-                    <div class="bg-slate-50 p-4 rounded-lg">
-                        <h4 class="font-semibold mb-2">Datos de la Empresa</h4>
-                        <form id="company-details-form" data-netlify="false">
-                            <div class="space-y-4">
-                                <div><label for="company-name" class="block text-sm font-medium text-slate-700">Nombre de la Empresa</label><input type="text" id="company-name" class="form-input"></div>
-                                <div><label for="company-cif" class="block text-sm font-medium text-slate-700">CIF/NIF</label><input type="text" id="company-cif" class="form-input"></div>
-                                <div><label for="company-address" class="block text-sm font-medium text-slate-700">Dirección</label><input type="text" id="company-address" class="form-input"></div>
-                                <div class="text-right flex items-center justify-end">
-                                    <span id="company-details-success" class="text-green-600 text-sm mr-4 hidden">¡Datos guardados!</span>
-                                    <button type="submit" class="btn btn-primary btn-icon-text"><i class="fas fa-save"></i> Guardar Datos</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="bg-slate-50 p-4 rounded-lg">
-                        <h4 class="font-semibold mb-2">Logo</h4>
-                        <div class="flex items-center gap-4">
-                            <img id="logo-preview" src="https://placehold.co/100x100/6366f1/ffffff?text=Logo" class="h-20 w-20 object-contain border p-1 rounded-md bg-white">
-                            <div>
-                                <label for="logo-upload" class="btn btn-secondary btn-icon-text cursor-pointer"><i class="fas fa-upload"></i> Seleccionar Logo</label>
-                                <input type="file" id="logo-upload" class="hidden" accept="image/*">
-                                <button data-action="save-logo" id="save-logo-btn" class="btn btn-primary btn-icon-text mt-2 hidden"><i class="fas fa-save"></i> Guardar Logo</button>
-                                <p id="logo-save-success" class="text-green-600 text-sm mt-2 hidden">¡Logo guardado!</p>
-                                <p id="logo-save-error" class="text-red-500 text-sm mt-2 hidden"></p>
-                                <p class="text-xs text-slate-500 mt-2">Sube un archivo de imagen (JPG, PNG, etc.)</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
-        </div>
+
     </div>
+
     <script type="module">
         const SUPABASE_URL = 'https://thzalqqhxlqpnaswzraw.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoemFscXFoeGxxcG5hc3d6cmF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4ODg2MjcsImV4cCI6MjA3MTQ2NDYyN30.tworaVCWL7suWJqtbR7mIXEivdZaM3lBVtgJLgwRvYc';
+
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const views = { loading: document.getElementById('loading-view'), login: document.getElementById('login-view'), employee: document.getElementById('employee-view'), manager: document.getElementById('manager-view') };
-        let currentUser = null, currentPin = '', activeShiftId = null, signaturePad, editingShiftId = null, tempLogoData = null;
-        let shiftsSubscription = null, usersSubscription = null;
+        // --- ESTADO DE LA APLICACIÓN ---
+        const views = {
+            loading: document.getElementById('loading-view'),
+            login: document.getElementById('login-view'),
+            employee: document.getElementById('employee-view'),
+            manager: document.getElementById('manager-view')
+        };
+        let currentUser = null;
+        let currentPin = '';
+        let activeShiftId = null;
 
-        const showView = (viewName) => { Object.values(views).forEach(v => v.style.display = 'none'); views[viewName].style.display = 'block'; };
-        const updatePinDisplay = () => { document.getElementById('pin-display').textContent = '*'.repeat(currentPin.length); };
-        
-        // --- INICIO DE LA MODIFICACIÓN ---
+        // --- FUNCIONES DE LA VISTA ---
+        const showView = (viewName) => {
+            Object.values(views).forEach(v => v.style.display = 'none');
+            views[viewName].style.display = 'block';
+        };
 
-        const initializeSystem = async () => {
-            try {
-                console.log("🚀 Iniciando inicialización del sistema...");
-                
-                // Asegurar que exista un administrador
-                const { data, error } = await supabase.rpc('ensure_admin_exists');
-                
-                if (error) {
-                    console.error("❌ Error en la inicialización:", error);
-                    throw error;
-                }
-                
-                // Log detallado
-                console.log("Resultado de inicialización:", JSON.stringify(data, null, 2));
-                
-                return data;
-            } catch (err) {
-                console.error("❌ Error global en inicialización:", err);
-                throw err;
+        const updatePinDisplay = () => {
+            document.getElementById('pin-display').textContent = '*'.repeat(currentPin.length);
+        };
+
+        // --- LÓGICA DE AUTENTICACIÓN (MODIFICADA) ---
+        const enterPin = (num) => {
+            if (currentPin.length < 4) {
+                currentPin += num;
+                updatePinDisplay();
             }
         };
 
-        const authenticateWithPin = async (pin) => {
-            try {
-                // Primero, intentar asegurar que exista un administrador
-                const ensureAdminResult = await supabase.rpc('ensure_admin_exists');
-                console.log("Resultado de ensure_admin_exists:", ensureAdminResult);
-
-                // Luego, intentar autenticar con el PIN
-                const { data, error } = await supabase.rpc('authenticate_with_pin_debug', { 
-                    input_pin: pin 
-                });
-                
-                console.log("Resultado de autenticación detallado:", JSON.stringify(data, null, 2));
-                
-                if (error) {
-                    console.error("❌ Error de autenticación:", error);
-                    throw error;
-                }
-                
-                // Código corregido para manejar el error
-                if (!data.success) {
-                  throw new Error(data.message || 'PIN incorrecto');
-                }
-                // Si success es true, continuar...
-                
-                return data;
-            } catch (err) {
-                // Manejar cualquier error de autenticación
-                console.error("❌ Error en autenticación:", err);
-                
-                // Mostrar mensaje de error al usuario
-                showErrorModal('Error de Autenticación', err.message || 'No se pudo iniciar sesión');
-                
-                throw err;
-            }
+        const clearPin = () => {
+            currentPin = '';
+            updatePinDisplay();
+            document.getElementById('login-error').textContent = '';
         };
 
         const login = async () => {
             const loginError = document.getElementById('login-error');
             loginError.textContent = '';
-            
-            if (currentPin.length !== 4) { 
-                loginError.textContent = 'El PIN debe tener 4 dígitos.'; 
-                return; 
+            if (currentPin.length !== 4) {
+                loginError.textContent = 'El PIN debe tener 4 dígitos.';
+                return;
             }
 
             try {
-                const authResult = await authenticateWithPin(currentPin);
-                
-                const userDetails = authResult.user_details;
-                
-                currentUser = {
-                    id: userDetails.id,
-                    name: userDetails.name,
-                    role: userDetails.role
-                };
+                // Buscamos un usuario que tenga ese PIN
+                const { data: user, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('pin', currentPin)
+                    .single(); // .single() espera un único resultado
 
-                if (currentUser.role === 'manager') { 
-                    showView('manager'); 
-                    await loadManagerView(); 
-                } else { 
-                    showView('employee'); 
-                    await loadEmployeeView(); 
+                if (error || !user) {
+                    console.error("Error de inicio de sesión o PIN no encontrado:", error);
+                    loginError.textContent = 'PIN incorrecto o no encontrado.';
+                    clearPin();
+                    return;
                 }
                 
+                // Guardamos el usuario y cargamos su vista
+                currentUser = user;
+                localStorage.setItem('currentUser', JSON.stringify(user)); // Guardar sesión
+
+                if (currentUser.role === 'manager') {
+                    showView('manager');
+                    // await loadManagerView(); // Descomentar si tienes esta función
+                } else {
+                    showView('employee');
+                    // await loadEmployeeView(); // Descomentar si tienes esta función
+                }
+
             } catch (err) {
-                // El error ya se muestra en el modal a través de authenticateWithPin
-                console.log("Fallo en el proceso de login.");
+                console.error("Error inesperado en login:", err);
+                loginError.textContent = 'Error inesperado. Inténtalo de nuevo.';
                 clearPin();
             }
         };
 
-        const init = async () => {
-            showView('loading');
-            try {
-                console.log("🔄 Iniciando proceso de inicialización...");
-                await initializeSystem();
-                
-                console.log("🖼️ Cargando logo de la empresa...");
-                await loadCompanyLogoForLogin();
-                
-                showView('login');
-                console.log("🎉 Inicialización completada.");
-                setupEventListeners();
-                
-            } catch (err) {
-                console.error("❌ Fallo de inicialización:", err);
-                document.getElementById('loading-message').textContent = 'Error al cargar la aplicación. Revisa la consola.';
-                document.getElementById('loading-message').classList.add('text-red-500');
-                showErrorModal('Error de Inicialización', err.message);
-            }
-        };
-        
-        // --- FIN DE LA MODIFICACIÓN ---
-
-        const loadCompanyLogoForLogin = async () => {
-             try {
-                const { data, error } = await supabase.from('company_details').select('logo').limit(1).maybeSingle();
-                if (error && error.code !== 'PGRST116') {
-                    console.warn("No se pudo cargar el logo:", error.message);
-                    return;
-                }
-                if (data && data.logo) {
-                    document.getElementById('login-logo').src = data.logo;
-                }
-            } catch (err) {
-                console.error("Error inesperado en loadCompanyLogoForLogin:", err);
-            }
-        };
-
-        const enterPin = (num) => { 
-            if (currentPin.length < 4) { 
-                currentPin += num; 
-                updatePinDisplay(); 
-            } 
-        };
-
-        const clearPin = () => { 
-            currentPin = ''; 
-            updatePinDisplay(); 
-            document.getElementById('login-error').textContent = ''; 
-        };
-
-        const logout = async () => {
-            if (shiftsSubscription) await supabase.removeChannel(shiftsSubscription);
-            if (usersSubscription) await supabase.removeChannel(usersSubscription);
-            shiftsSubscription = null;
-            usersSubscription = null;
-            currentUser = null; 
-            currentPin = ''; 
-            activeShiftId = null;
+        const logout = () => {
+            currentUser = null;
+            localStorage.removeItem('currentUser'); // Limpiar sesión
+            currentPin = '';
             updatePinDisplay();
             showView('login');
         };
-
-        const loadEmployeeView = async () => {
-            document.getElementById('employee-name').textContent = currentUser.name;
-            const now = new Date();
-            const monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            document.getElementById('current-month').textContent = now.toLocaleString('es-ES', { month: 'long', year: 'numeric' });
-            listenForShifts(currentUser.id, monthYear, 'employee');
-            updateSignatureButtonState(currentUser.id, monthYear);
-        };
-
-        const listenForShifts = async (userId, monthYear, viewType) => {
-            if (shiftsSubscription) {
-                await supabase.removeChannel(shiftsSubscription);
-                shiftsSubscription = null;
-            }
-
-            const fetchAndRender = async () => {
-                try {
-                    const [year, month] = monthYear.split('-').map(Number);
-                    const startDate = new Date(year, month - 1, 1).toISOString();
-                    const endDate = new Date(year, month, 1).toISOString();
-                    const { data, error } = await supabase
-                        .from('shifts')
-                        .select('*')
-                        .eq('user_id', userId)
-                        .gte('start_time', startDate)
-                        .lt('start_time', endDate);
-                    if (error) throw error;
-                    
-                    data.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
-                    if (viewType === 'employee') {
-                        updateEmployeeShiftsUI(data);
-                    } else {
-                        updateManagerShiftsUI(data);
-                    }
-                } catch (err) {
-                    console.error("Error fetching shifts:", err);
-                    const statusEl = viewType === 'employee' ? document.getElementById('clock-status') : document.getElementById('manager-total-hours');
-                    statusEl.textContent = `Error al cargar turnos: ${err.message}`;
-                    statusEl.classList.add('text-red-500');
-                }
-            };
-
-            await fetchAndRender();
-
-            shiftsSubscription = supabase
-                .channel(`public:shifts:user_id=eq.${userId}`)
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'shifts', filter: `user_id=eq.${userId}`}, 
-                    (payload) => {
-                        console.log("Cambio detectado en turnos:", payload);
-                        fetchAndRender();
-                    }
-                ).subscribe();
-        };
-
-        const updateEmployeeShiftsUI = (shifts) => {
-            let totalMinutes = 0;
-            activeShiftId = null;
-            shifts.forEach(shift => {
-                if (shift.status === 'completed' && shift.end_time) totalMinutes += (new Date(shift.end_time) - new Date(shift.start_time)) / 60000;
-                else if (shift.status === 'in-progress') activeShiftId = shift.id;
-            });
-            updateEmployeeShiftsTable(shifts);
-            updateClockButtons();
-            document.getElementById('total-hours').textContent = (totalMinutes / 60).toFixed(2);
-            const monthYear = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-            updateSignatureButtonState(currentUser.id, monthYear);
-        };
-
-        const updateEmployeeShiftsTable = (shifts) => {
-            const table = document.querySelector('#employee-view table');
-            const tableBody = table.querySelector('tbody');
-            const headers = `<thead><tr class="border-b"><th class="p-2">Fecha</th><th class="p-2">Entrada</th><th class="p-2">Salida</th><th class="p-2">Total Horas</th><th class="p-2">Estado</th><th class="p-2"></th></tr></thead>`;
-            if (shifts.length === 0) { tableBody.innerHTML = '<tr><td colspan="6" class="p-2 text-center text-slate-500">No hay registros este mes.</td></tr>'; table.querySelector('thead').innerHTML = headers; return; }
-            const rows = shifts.map(shift => {
-                const start = new Date(shift.start_time);
-                const end = shift.end_time ? new Date(shift.end_time) : null;
-                const totalHours = end ? ((end - start) / 3600000).toFixed(2) : 'En curso';
-                const statusMap = { completed: '<span class="text-green-600">Aprobado</span>', pending_approval: '<span class="text-yellow-600">Pendiente</span>', in_progress: '<span class="text-blue-600">En curso</span>' };
-                const editButton = shift.status !== 'in-progress' ? `<button data-action="show-shift-form" data-shift-id="${shift.id}" class="text-blue-600 hover:text-blue-800"><i class="fas fa-edit"></i></button>` : '';
-                return `<tr class="${shift.status === 'pending_approval' ? 'pending-approval' : ''} border-b last:border-b-0"><td class="p-2">${start.toLocaleDateString('es-ES')}</td><td class="p-2">${start.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</td><td class="p-2">${end ? end.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) : '-'}</td><td class="p-2">${totalHours}</td><td class="p-2">${statusMap[shift.status] || ''}</td><td class="p-2 text-right">${editButton}</td></tr>`;
-            }).join('');
-            tableBody.innerHTML = rows;
-            table.querySelector('thead').innerHTML = headers;
-        };
-
-        const updateClockButtons = () => {
-            const clockInBtn = document.getElementById('clock-in-btn'), clockOutBtn = document.getElementById('clock-out-btn'), clockStatus = document.getElementById('clock-status');
-            clockInBtn.disabled = !!activeShiftId; clockOutBtn.disabled = !activeShiftId;
-            clockStatus.textContent = activeShiftId ? 'Turno en progreso.' : '';
-            clockStatus.classList.toggle('text-green-600', !!activeShiftId);
-            clockStatus.classList.remove('text-red-500');
-        };
-
-        const clockIn = async () => {
-            if (!activeShiftId) {
-                try {
-                    const { data, error } = await supabase
-                        .from('shifts')
-                        .insert([{ user_id: currentUser.id, start_time: new Date().toISOString(), status: 'in-progress' }])
-                        .select()
-                        .single();
-                    if (error) throw error;
-                    activeShiftId = data.id;
-                    updateClockButtons();
-                } catch (err) {
-                    document.getElementById('clock-status').textContent = `Error al iniciar turno: ${err.message}`;
-                    document.getElementById('clock-status').classList.add('text-red-500');
-                }
-            }
-        };
-
-        const clockOut = async () => {
-            if (activeShiftId) {
-                try {
-                    const { error } = await supabase
-                        .from('shifts')
-                        .update({ end_time: new Date().toISOString(), status: 'completed' })
-                        .eq('id', activeShiftId);
-                    if (error) throw error;
-                    activeShiftId = null;
-                    updateClockButtons();
-                } catch (err) {
-                    document.getElementById('clock-status').textContent = `Error al finalizar turno: ${err.message}`;
-                    document.getElementById('clock-status').classList.add('text-red-500');
-                }
-            }
-        };
-
-        const updateSignatureButtonState = async (userId, monthYear) => {
-            const approveBtn = document.getElementById('approve-hours-btn'), signedMsg = document.getElementById('signed-message');
-            approveBtn.classList.add('hidden'); signedMsg.classList.add('hidden');
-            const { data } = await supabase.from('signatures').select('id').eq('user_id', userId).eq('month_year', monthYear).maybeSingle();
-            if (data) { signedMsg.classList.remove('hidden'); return; }
-            const today = new Date(), [year, month] = monthYear.split('-').map(Number);
-            if (today >= new Date(year, month, 0)) approveBtn.classList.remove('hidden');
-        };
-
-        const openSignatureModal = () => {
-            if (!window.SignaturePad) return;
-            document.getElementById('signature-container').classList.remove('hidden');
-            const canvas = document.getElementById('signature-canvas'), ratio = Math.max(window.devicePixelRatio || 1, 1);
-            canvas.width = canvas.offsetWidth * ratio; canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
-            signaturePad = new window.SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
-        };
-
-        const hideSignaturePad = () => { document.getElementById('signature-container').classList.add('hidden'); if (signaturePad) signaturePad.clear(); signaturePad = null; };
-        const clearSignature = () => { if (signaturePad) signaturePad.clear(); };
-
-        const saveSignature = async () => {
-            const signatureError = document.getElementById('signature-error');
-            signatureError.textContent = '';
-            if (!signaturePad || signaturePad.isEmpty()) { signatureError.textContent = "Por favor, proporciona una firma."; return; }
-            const now = new Date(), monthYear = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-            const { error } = await supabase.from('signatures').insert([{ user_id: currentUser.id, month_year: monthYear, signature_data: signaturePad.toDataURL(), signed_at: now.toISOString() }]);
-            if (!error) { hideSignaturePad(); updateSignatureButtonState(currentUser.id, monthYear); }
-            else {
-                signatureError.textContent = `Error al guardar: ${error.message}`;
-            }
-        };
-
-        const showShiftForm = async (shiftId = null) => {
-            editingShiftId = shiftId;
-            document.getElementById('shift-form-container').classList.remove('hidden');
-            document.getElementById('shift-form').reset();
-            document.getElementById('shift-modal-error').textContent = '';
-            document.getElementById('shift-form-title').textContent = editingShiftId ? 'Editar Fichaje' : 'Añadir Fichaje Olvidado';
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('shift-date-start').value = today;
-            document.getElementById('shift-date-end').value = today;
-
-            if (editingShiftId) {
-                const { data } = await supabase.from('shifts').select('*').eq('id', editingShiftId).single();
-                if (data) {
-                    const start = new Date(data.start_time), end = new Date(data.end_time);
-                    document.getElementById('shift-date-start').value = start.toISOString().split('T')[0];
-                    document.getElementById('start-time').value = start.toTimeString().substring(0, 5);
-                    document.getElementById('shift-date-end').value = end.toISOString().split('T')[0];
-                    document.getElementById('end-time').value = end.toTimeString().substring(0, 5);
-                }
-            }
-        };
-
-        const hideShiftForm = () => { document.getElementById('shift-form-container').classList.add('hidden'); editingShiftId = null; };
-
-        const saveShift = async () => {
-            const startDate = document.getElementById('shift-date-start').value, startTime = document.getElementById('start-time').value;
-            const endDate = document.getElementById('shift-date-end').value, endTime = document.getElementById('end-time').value;
-            const modalError = document.getElementById('shift-modal-error');
-            if (!startDate || !startTime || !endDate || !endTime) { modalError.textContent = 'Todos los campos son obligatorios.'; return; }
-            const startDateTime = new Date(`${startDate}T${startTime}`), endDateTime = new Date(`${endDate}T${endTime}`);
-            if (endDateTime <= startDateTime) { modalError.textContent = 'La hora de salida debe ser posterior a la de entrada.'; return; }
-            const shiftData = { user_id: currentUser.id, start_time: startDateTime.toISOString(), end_time: endDateTime.toISOString(), status: 'pending_approval' };
-            const { error } = editingShiftId ? await supabase.from('shifts').update(shiftData).eq('id', editingShiftId) : await supabase.from('shifts').insert(shiftData);
-            if (!error) hideShiftForm(); else { modalError.textContent = `Error al guardar: ${error.message}`; }
-        };
-
-        const loadManagerView = async () => {
-            document.getElementById('month-select').value = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-            await populateEmployeeDropdown();
-            listenForEmployees();
-            await loadCompanySettings();
-            updateManagerShiftView();
-        };
-
-        const switchTab = (tabName) => { ['reports','employees','settings'].forEach(t => { document.getElementById(`${t}-content`).style.display = t === tabName ? 'block' : 'none'; document.getElementById(`tab-${t}`).classList.toggle('tab-active', t === tabName); }); };
-
-        const updateManagerShiftView = () => {
-            const employeeSelect = document.getElementById('employee-select');
-            if (!employeeSelect.value) { document.getElementById('manager-shifts-table-body').innerHTML = '<tr><td colspan="5" class="p-2 text-center text-slate-500">Selecciona un empleado.</td></tr>'; return; }
-            const employeeId = employeeSelect.value, monthYear = document.getElementById('month-select').value;
-            const [year, month] = monthYear.split('-');
-            document.getElementById('manager-employee-name').textContent = employeeSelect.options[employeeSelect.selectedIndex].text;
-            document.getElementById('manager-month-display').textContent = new Date(year, month - 1).toLocaleString('es-ES', { month: 'long', year: 'numeric' });
-            listenForShifts(employeeId, monthYear, 'manager');
-            updateManagerSignatureDisplay(employeeId, monthYear);
-        };
-
-        const updateManagerShiftsUI = (shifts) => {
-            const table = document.querySelector('#manager-view table');
-            const tableBody = table.querySelector('tbody');
-            const headers = `<thead><tr class="border-b"><th class="p-2">Fecha</th><th class="p-2">Entrada</th><th class="p-2">Salida</th><th class="p-2">Total Horas</th><th class="p-2">Acciones</th></tr></thead>`;
-            let totalMinutes = 0;
-            if (shifts.length === 0) { tableBody.innerHTML = '<tr><td colspan="5" class="p-2 text-center text-slate-500">No hay registros.</td></tr>'; table.querySelector('thead').innerHTML = headers; document.getElementById('manager-total-hours').textContent = '0.00'; return; }
-            const rows = shifts.map(shift => {
-                const start = new Date(shift.start_time), end = shift.end_time ? new Date(shift.end_time) : null;
-                const totalHours = end ? ((end - start) / 3600000).toFixed(2) : 'En curso';
-                const actions = `
-                    <div class="flex gap-2 items-center">
-                        ${shift.status === 'pending_approval' ? `
-                            <button title="Aprobar" data-action="approve-shift" data-shift-id="${shift.id}" class="text-green-600 hover:text-green-800"><i class="fas fa-check-circle"></i></button>
-                            <button title="Rechazar" data-action="reject-shift" data-shift-id="${shift.id}" class="text-orange-600 hover:text-orange-800"><i class="fas fa-times-circle"></i></button>
-                        ` : ''}
-                        <button title="Eliminar" data-action="delete-shift" data-shift-id="${shift.id}" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
-                    </div>`;
-                if (shift.status === 'completed' && shift.end_time) totalMinutes += (end - start) / 60000;
-                return `<tr class="${shift.status === 'pending_approval' ? 'pending-approval' : ''} border-b last:border-b-0"><td class="p-2">${start.toLocaleDateString('es-ES')}</td><td class="p-2">${start.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</td><td class="p-2">${end ? end.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) : '-'}</td><td class="p-2">${totalHours}</td><td class="p-2">${actions}</td></tr>`;
-            }).join('');
-            tableBody.innerHTML = rows;
-            table.querySelector('thead').innerHTML = headers;
-            document.getElementById('manager-total-hours').textContent = (totalMinutes / 60).toFixed(2);
-        };
-
-        const updateManagerSignatureDisplay = async (userId, monthYear) => {
-            const display = document.getElementById('manager-signature-display');
-            const { data } = await supabase.from('signatures').select('*').eq('user_id', userId).eq('month_year', monthYear).maybeSingle();
-            if (data) {
-                display.innerHTML = `<h4 class="font-semibold">Firma del Empleado</h4><img src="${data.signature_data}" alt="Firma" class="mt-2 border rounded-md bg-white"/><p class="text-sm text-slate-500 mt-1">Firmado el: ${new Date(data.signed_at).toLocaleString('es-ES')}</p>`;
-            } else {
-                display.innerHTML = '<p class="text-slate-500">Este parte de horas aún no ha sido firmado.</p>';
-            }
-        };
-
-        const approveShift = async (shiftId) => { await supabase.from('shifts').update({ status: 'completed' }).eq('id', shiftId); };
-        const rejectShift = async (shiftId) => { if (confirm('¿Rechazar y eliminar este fichaje?')) await supabase.from('shifts').delete().eq('id', shiftId); };
-        const deleteShift = async (shiftId) => { if (confirm('¿Eliminar este fichaje permanentemente?')) await supabase.from('shifts').delete().eq('id', shiftId); };
-
-        const populateEmployeeDropdown = async () => {
-            const employeeSelect = document.getElementById('employee-select');
-            const { data, error } = await supabase.from('users').select('id, name, role').order('name');
-            if (error) { console.error("Error al cargar empleados:", error); return; }
-            employeeSelect.innerHTML = data.map(user => `<option value="${user.id}">${user.name}${user.role === 'manager' ? ' (Admin)' : ''}</option>`).join('');
-            updateManagerShiftView();
-        };
-
-        const listenForEmployees = async () => {
-            if (usersSubscription) await supabase.removeChannel(usersSubscription);
-            usersSubscription = supabase.channel('public:users').on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, (payload) => {
-                populateEmployeeDropdown();
-                renderEmployeeList();
-            }).subscribe();
-            renderEmployeeList(); // Carga inicial
-        };
         
-        const renderEmployeeList = async () => {
-            const employeeListDiv = document.getElementById('employee-list');
-            const { data, error } = await supabase.from('users').select('*').order('name');
-            if(error) { employeeListDiv.innerHTML = `<p class="text-red-500">Error al cargar la lista de empleados.</p>`; return; }
-            if(!data.length) { employeeListDiv.innerHTML = `<p class="text-slate-500">No hay empleados registrados.</p>`; return; }
-            employeeListDiv.innerHTML = data.map(employee => `
-                <div class="bg-slate-50 p-3 rounded-lg flex justify-between items-center">
-                    <div><p class="font-semibold">${employee.name}</p><p class="text-sm text-slate-500">PIN: ${employee.pin} | Rol: ${employee.role === 'manager' ? 'Admin' : 'Empleado'}</p></div>
-                    <div class="flex items-center space-x-2">
-                        <button data-action="show-employee-form" data-user-id="${employee.id}" class="text-blue-600 hover:text-blue-800"><i class="fas fa-edit"></i></button>
-                        <button data-action="delete-employee" data-user-id="${employee.id}" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>
-            `).join('');
-        };
-        
-        const deleteEmployee = async (userId) => {
-            if (!confirm('¿Seguro que quieres eliminar este empleado? Esta acción no se puede deshacer.')) return;
-            // Primero, necesitas eliminar al usuario de Supabase Auth. Esto requiere privilegios de administrador.
-            // Esta operación debe realizarse desde un entorno seguro (backend) usando la service_role_key.
-            // Desde el cliente, solo podemos eliminar el registro de la tabla 'users'.
-            console.warn("Eliminando solo el registro de la tabla 'users'. La cuenta de autenticación permanecerá.");
-            const { error } = await supabase.from('users').delete().eq('id', userId);
-            if(error) alert(`Error al eliminar empleado: ${error.message}`);
-        };
+        const checkSession = () => {
+             const storedUser = localStorage.getItem('currentUser');
+             if (storedUser) {
+                 currentUser = JSON.parse(storedUser);
+                 if (currentUser.role === 'manager') {
+                    showView('manager');
+                    // await loadManagerView();
+                 } else {
+                    showView('employee');
+                    // await loadEmployeeView();
+                 }
+             } else {
+                showView('login');
+             }
+        }
 
-        const showEmployeeForm = async (userId = null) => {
-            document.getElementById('form-title').textContent = userId ? 'Editar Empleado' : 'Añadir Nuevo Empleado';
-            document.getElementById('editing-user-id').value = userId || '';
-            document.getElementById('employee-form-container').classList.remove('hidden');
-            document.getElementById('employee-form').reset();
-            if (userId) {
-                const { data } = await supabase.from('users').select('*').eq('id', userId).single();
-                if (data) {
-                    document.getElementById('employee-name-input').value = data.name;
-                    document.getElementById('employee-email-input').value = data.email || '';
-                    document.getElementById('employee-pin-input').value = data.pin;
-                    document.getElementById('employee-role-select').value = data.role;
-                }
-            }
-        };
-
-        const hideEmployeeForm = () => { document.getElementById('employee-form-container').classList.add('hidden'); };
-
+        // --- LÓGICA PARA GUARDAR EMPLEADO (MODIFICADA) ---
         const saveEmployee = async (event) => {
             event.preventDefault();
             const form = event.target;
             const id = form.querySelector('#editing-user-id').value;
             const name = form.querySelector('#employee-name-input').value;
-            const email = form.querySelector('#employee-email-input').value;
             const pin = form.querySelector('#employee-pin-input').value;
             const role = form.querySelector('#employee-role-select').value;
             const modalError = document.getElementById('modal-error');
             modalError.textContent = '';
             
-            if (pin.length !== 4) { modalError.textContent = "El PIN debe tener 4 dígitos."; return; }
-            
+            if (pin.length !== 4) {
+                modalError.textContent = "El PIN debe tener 4 dígitos.";
+                return;
+            }
+
+            // El objeto userData ya no necesita el email
+            const userData = { name, pin, role };
+
             try {
-                if (id) { // Editando
-                    const { error } = await supabase.from('users').update({ name, email, pin, role }).eq('id', id);
+                if (id) { // Editando un usuario existente
+                    const { error } = await supabase.from('users').update(userData).eq('id', id);
                     if (error) throw error;
-                } else { // Creando
-                    const { error } = await supabase.from('users').insert({ name, email, pin, role });
-                    if(error) throw error;
+                } else { // Creando un nuevo usuario
+                    const { error } = await supabase.from('users').insert(userData);
+                    if (error) throw error;
                 }
-                hideEmployeeForm();
+                // hideEmployeeForm(); // Ocultar el formulario tras guardar
+                // await populateEmployeeDropdown(); // Actualizar la lista de empleados
             } catch (err) {
-                modalError.textContent = `Error: ${err.message}`;
+                console.error("Error al guardar empleado:", err);
+                // Manejar el caso de PIN duplicado
+                if (err.message.includes('duplicate key value violates unique constraint "users_pin_key"')) {
+                     modalError.textContent = 'Error: Este PIN ya está en uso. Por favor, elige otro.';
+                } else {
+                     modalError.textContent = `Error: ${err.message}`;
+                }
             }
         };
 
-        const loadCompanySettings = async () => {
-            const { data, error } = await supabase.from('company_details').select('*').limit(1).maybeSingle();
-            if (error) { console.error("Error al cargar detalles de la empresa:", error); return; }
-            if (data) {
-                document.getElementById('company-name').value = data.name || '';
-                document.getElementById('company-cif').value = data.cif || '';
-                document.getElementById('company-address').value = data.address || '';
-                if (data.logo) document.getElementById('logo-preview').src = data.logo;
-            }
-        };
 
-        const saveCompanyDetails = async (event) => {
-            event.preventDefault();
-            const name = document.getElementById('company-name').value;
-            const cif = document.getElementById('company-cif').value;
-            const address = document.getElementById('company-address').value;
-            const { error } = await supabase.from('company_details').upsert({ id: 1, name, cif, address });
-            const successMsg = document.getElementById('company-details-success');
-            if (!error) { 
-                successMsg.classList.remove('hidden');
-                setTimeout(() => successMsg.classList.add('hidden'), 3000);
-            }
-        };
-
-        const handleLogoUpload = (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            tempLogoData = file;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                document.getElementById('logo-preview').src = e.target.result;
-                document.getElementById('save-logo-btn').classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-        };
-
-        const saveLogo = async () => {
-            if (!tempLogoData) return;
-            const fileName = `logo_${Date.now()}.${tempLogoData.name.split('.').pop()}`;
-            const { error } = await supabase.storage.from('company_logos').upload(fileName, tempLogoData, { upsert: true });
-            if (error) { document.getElementById('logo-save-error').textContent = `Error: ${error.message}`; return; }
-            
-            const { data: urlData } = supabase.storage.from('company_logos').getPublicUrl(fileName);
-            const { error: dbError } = await supabase.from('company_details').upsert({ id: 1, logo: urlData.publicUrl });
-            const successMsg = document.getElementById('logo-save-success');
-            if (!dbError) {
-                successMsg.classList.remove('hidden');
-                setTimeout(() => successMsg.classList.add('hidden'), 3000);
-            }
-        };
-
-        const generatePDF = async () => {
-            const employeeId = document.getElementById('employee-select').value;
-            if(!employeeId) { alert("Por favor, selecciona un empleado."); return; }
-            const monthYear = document.getElementById('month-select').value;
-            const { data: shifts, error: shiftsError } = await supabase.from('shifts').select('*').eq('user_id', employeeId)
-                .gte('start_time', `${monthYear}-01T00:00:00Z`).lt('start_time', `${monthYear}-32T00:00:00Z`);
-            
-            const { data: user, error: userError } = await supabase.from('users').select('*').eq('id', employeeId).maybeSingle();
-            const { data: company, error: companyError } = await supabase.from('company_details').select('*').maybeSingle();
-
-            if (shiftsError || userError || companyError) { alert("Error al obtener datos para el PDF."); return; }
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-
-            doc.setFontSize(18);
-            doc.text(`Informe de Horas - ${user.name}`, 14, 22);
-            doc.setFontSize(12);
-            doc.text(`Mes: ${document.getElementById('manager-month-display').textContent}`, 14, 30);
-            doc.text(`Empresa: ${company.name || ''}`, 14, 36);
-            doc.text(`CIF: ${company.cif || ''}`, 14, 42);
-
-            const tableColumn = ["Fecha", "Entrada", "Salida", "Total Horas"];
-            const tableRows = [];
-            let totalMinutes = 0;
-
-            shifts.forEach(shift => {
-                const start = new Date(shift.start_time);
-                const end = new Date(shift.end_time);
-                const hours = ((end - start) / 3600000).toFixed(2);
-                if(shift.status === 'completed') totalMinutes += (end - start) / 60000;
-                const shiftData = [
-                    start.toLocaleDateString('es-ES'),
-                    start.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}),
-                    end.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}),
-                    hours
-                ];
-                tableRows.push(shiftData);
-            });
-
-            doc.autoTable({
-                head: [tableColumn],
-                body: tableRows,
-                startY: 50,
-            });
-
-            const finalY = doc.lastAutoTable.finalY;
-            doc.setFontSize(14);
-            doc.text(`Total Horas Aprobadas: ${(totalMinutes / 60).toFixed(2)}`, 14, finalY + 10);
-            
-            const { data: signature } = await supabase.from('signatures').select('signature_data').eq('user_id', employeeId).eq('month_year', monthYear).maybeSingle();
-            if(signature) {
-                doc.text("Firma del Empleado:", 14, finalY + 20);
-                doc.addImage(signature.signature_data, 'PNG', 14, finalY + 25, 60, 30);
-            }
-
-            doc.save(`informe_horas_${user.name}_${monthYear}.pdf`);
-        };
-
-
+        // --- INICIALIZACIÓN Y EVENTOS ---
         const setupEventListeners = () => {
-            document.body.addEventListener('click', async (e) => {
-                const target = e.target.closest('[data-action]');
-                if (!target) return;
-                const action = target.dataset.action;
-                const value = target.dataset.value;
-                const shiftId = target.dataset.shiftId;
-                const tab = target.dataset.tab;
-                const userId = target.dataset.userId;
+            document.body.addEventListener('click', (e) => {
+                const button = e.target.closest('[data-action]');
+                if (!button) return;
 
-                const actions = {
-                    'enter-pin': () => enterPin(value), 'clear-pin': clearPin, 'login': login, 'logout': logout,
-                    'clock-in': clockIn, 'clock-out': clockOut, 'show-shift-form': () => showShiftForm(shiftId),
-                    'hide-shift-form': hideShiftForm, 'open-signature-modal': openSignatureModal,
-                    'clear-signature': clearSignature, 'cancel-signature': hideSignaturePad, 'save-signature': saveSignature,
-                    'switch-tab': () => switchTab(tab), 'generate-pdf': generatePDF, 'show-employee-form': () => showEmployeeForm(userId),
-                    'hide-employee-form': hideEmployeeForm, 'approve-shift': () => approveShift(shiftId), 'reject-shift': () => rejectShift(shiftId),
-                    'delete-shift': () => deleteShift(shiftId), 'save-logo': saveLogo, 'delete-employee': () => deleteEmployee(userId)
-                };
-                if (actions[action]) await actions[action]();
+                const { action, value } = button.dataset;
+
+                switch (action) {
+                    case 'enter-pin': enterPin(value); break;
+                    case 'clear-pin': clearPin(); break;
+                    case 'login': login(); break;
+                    case 'logout': logout(); break;
+                    // ... aquí irían el resto de tus acciones (clock-in, etc.)
+                }
             });
-
-            document.getElementById('shift-form').addEventListener('submit', (e) => { e.preventDefault(); saveShift(); });
-            document.getElementById('employee-form').addEventListener('submit', saveEmployee);
-            document.getElementById('company-details-form').addEventListener('submit', saveCompanyDetails);
-            document.getElementById('logo-upload').addEventListener('change', handleLogoUpload);
-            document.getElementById('employee-select').addEventListener('change', updateManagerShiftView);
-            document.getElementById('month-select').addEventListener('change', updateManagerShiftView);
             
-            window.jsPDF = window.jspdf.jsPDF;
+            const employeeForm = document.getElementById('employee-form');
+            if(employeeForm) {
+                employeeForm.addEventListener('submit', saveEmployee);
+            }
         };
-        
-        function showErrorModal(title, message) {
-            const modal = document.createElement('div');
-            modal.innerHTML = `
-                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
-                        <h2 class="text-xl font-bold mb-4 text-red-600">${title}</h2>
-                        <p class="mb-4 text-slate-700">${message}</p>
-                        <div class="text-right">
-                           <button onclick="this.closest('.fixed').remove()" class="btn btn-primary">Cerrar</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-        }
+
+        const init = () => {
+            setupEventListeners();
+            checkSession(); // Comprobar si hay una sesión guardada
+        };
 
         init();
+
     </script>
 </body>
 </html>
