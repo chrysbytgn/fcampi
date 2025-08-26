@@ -3,29 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CampiClock - Sistema de Fichaje (Supabase)</title>
+    <title>CampiClock - Sistema de Fichaje</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/signature_pad/4.0.0/signature_pad.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f9fafb;
-            color: #1f2937;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f9fafb; color: #1f2937; }
         #employee-view, #manager-view, #login-view, #loading-view { display: none; }
-        .btn { padding: 0.75rem 1.25rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.3s ease-in-out; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 1rem; border: none; cursor: pointer; text-decoration: none; }
+        .btn { padding: 0.75rem 1.25rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.3s ease-in-out; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 1rem; border: none; cursor: pointer; }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
         .btn:active { transform: translateY(0); box-shadow: none; }
         button:disabled, .btn:disabled { opacity: 0.6; cursor: not-allowed; background-color: #d1d5db !important; color: #6b7280 !important; transform: none !important; box-shadow: none !important; }
         .pin-btn { background-color: #e5e7eb; color: #374151; min-width: 3rem; height: 3rem; border-radius: 9999px; font-size: 1.25rem; }
+        .btn-primary { background-color: #4b5bff; color: #ffffff; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
@@ -33,7 +24,7 @@
 
         <div id="loading-view" class="text-center">
             <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
-            <p class="mt-4 text-lg" id="loading-message">Cargando aplicación...</p>
+            <p class="mt-4 text-lg" id="loading-message">Cargando...</p>
         </div>
 
         <div id="login-view">
@@ -45,7 +36,6 @@
                 </div>
 
                 <div class="mb-4">
-                    <label for="pin-display" class="block text-sm font-medium text-slate-700 text-center">PIN</label>
                     <div id="pin-display" class="bg-slate-100 text-center text-3xl font-mono tracking-widest h-16 flex items-center justify-center rounded-lg mt-2"></div>
                 </div>
                 <div class="grid grid-cols-3 gap-3">
@@ -67,8 +57,12 @@
         </div>
 
         <div id="employee-view">
+            <h1>Bienvenido, <span id="employee-name"></span></h1>
+            <button data-action="logout" class="btn btn-danger">Cerrar Sesión</button>
             </div>
         <div id="manager-view">
+            <h1>Panel de Administración</h1>
+            <button data-action="logout" class="btn btn-danger">Cerrar Sesión</button>
             </div>
     </div>
 
@@ -96,7 +90,8 @@
         };
 
         const enterPin = (num) => {
-            if (currentPin.length < 4) {
+            const pinLength = 6; // Puedes cambiar esto a 4 o 6 según prefieras
+            if (currentPin.length < pinLength) {
                 currentPin += num;
                 updatePinDisplay();
             }
@@ -111,11 +106,6 @@
         const login = async () => {
             const loginError = document.getElementById('login-error');
             loginError.textContent = '';
-
-            if (currentPin.length !== 4) {
-                loginError.textContent = 'El PIN debe tener 4 dígitos.';
-                return;
-            }
 
             try {
                 // Llamada a la Edge Function solo con el PIN
@@ -134,7 +124,7 @@
 
             } catch (err) {
                 console.error("Error en login:", err);
-                loginError.textContent = 'PIN incorrecto o error en el servidor.';
+                loginError.textContent = 'PIN incorrecto o error del servidor.';
                 clearPin();
             }
         };
@@ -144,38 +134,23 @@
             currentUser = null;
             currentPin = '';
             updatePinDisplay();
-            showView('login');
         };
 
         const loadUserAndRedirect = async () => {
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                throw new Error("No hay usuario de autenticación a pesar de la sesión.");
-            }
+            if (!user) throw new Error("No hay usuario autenticado.");
             
-            const { data: userData, error } = await supabase
-                .from('users')
-                .select('*')
-                .eq('auth_id', user.id)
-                .single();
+            const { data: userData, error } = await supabase.from('users').select('*').eq('auth_id', user.id).single();
 
-            if (error) {
-                console.error("Error al cargar el perfil del usuario:", error);
-                throw error;
-            }
+            if (error) throw new Error("No se pudo cargar el perfil de usuario.");
             
-            if (!userData) {
-                throw new Error("El perfil del usuario no fue encontrado en la base de datos.");
-            }
-
             currentUser = userData;
 
             if (currentUser.role === 'manager') {
                 showView('manager');
-                // loadManagerView();
             } else {
+                document.getElementById('employee-name').textContent = currentUser.name;
                 showView('employee');
-                // loadEmployeeView();
             }
         };
         
@@ -183,18 +158,14 @@
             showView('loading');
 
             supabase.auth.onAuthStateChange(async (event, session) => {
-                console.log('Authentication event:', event);
-                
                 if (event === 'SIGNED_IN' || (event === 'INITIAL_SESSION' && session)) {
                     try {
                         await loadUserAndRedirect();
                     } catch (error) {
-                        console.error('Error al cargar datos de usuario, cerrando sesión:', error);
+                        console.error('Error al cargar datos de usuario:', error);
                         await logout();
                     }
-                } else if (event === 'SIGNED_OUT') {
-                    showView('login');
-                } else if (event === 'INITIAL_SESSION' && !session) {
+                } else if (event === 'SIGNED_OUT' || (event === 'INITIAL_SESSION' && !session)) {
                     showView('login');
                 }
             });
