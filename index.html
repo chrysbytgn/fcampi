@@ -14,20 +14,72 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f9fafb; color: #1f2937; }
-        #employee-view, #manager-view, #login-view { display: none; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+            color: #1f2937;
+        }
+        #employee-view, #manager-view, #login-view, #loading-view { display: none; }
         .signature-canvas { border: 2px dashed #e5e7eb; border-radius: 0.5rem; cursor: crosshair; }
         .pending-approval { background-color: #fefce8; }
-        .tab { padding: 0.75rem 0; font-size: 1rem; font-weight: 500; color: #6b7280; transition: color 0.3s ease; cursor: pointer; }
-        .tab-active { border-bottom: 2px solid #4b5bff; color: #4b5bff; font-weight: 600; }
+        .tab { 
+            padding: 0.75rem 0; 
+            font-size: 1rem; 
+            font-weight: 500;
+            color: #6b7280;
+            transition: color 0.3s ease;
+            cursor: pointer;
+        }
+        .tab-active { 
+            border-bottom: 2px solid #4b5bff; 
+            color: #4b5bff; 
+            font-weight: 600; 
+        }
 
-        .btn { padding: 0.75rem 1.25rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.3s ease-in-out; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 1rem; border: none; cursor: pointer; text-decoration: none; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
-        .btn:active { transform: translateY(0); box-shadow: none; }
-        button:disabled, .btn:disabled { opacity: 0.6; cursor: not-allowed; background-color: #d1d5db !important; color: #6b7280 !important; transform: none !important; box-shadow: none !important; }
+        /* Estilos de botones */
+        .btn {
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.3s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+        button:disabled, .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background-color: #d1d5db !important;
+            color: #6b7280 !important;
+            transform: none !important;
+            box-shadow: none !important;
+        }
 
-        .pin-btn { background-color: #e5e7eb; color: #374151; min-width: 3rem; height: 3rem; border-radius: 9999px; font-size: 1.25rem; }
-        .pin-btn:hover { background-color: #d1d5db; }
+        /* Variantes de botones */
+        .pin-btn {
+            background-color: #e5e7eb;
+            color: #374151;
+            min-width: 3rem;
+            height: 3rem;
+            border-radius: 9999px; /* Botones redondos */
+            font-size: 1.25rem;
+        }
+        .pin-btn:hover {
+            background-color: #d1d5db;
+        }
         .btn-primary { background-color: #4b5bff; color: #ffffff; }
         .btn-primary:hover { background-color: #3b4ddd; }
         .btn-secondary { background-color: #6b7280; color: #ffffff; }
@@ -37,18 +89,33 @@
         .btn-danger { background-color: #ef4444; color: #ffffff; }
         .btn-danger:hover { background-color: #dc2626; }
 
-        .form-input { width: 100%; padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; transition: border-color 0.3s ease; }
-        .form-input:focus { border-color: #4b5bff; outline: none; box-shadow: 0 0 0 2px rgba(75, 91, 255, 0.2); }
+        /* Estilos de formularios */
+        .form-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            transition: border-color 0.3s ease;
+        }
+        .form-input:focus {
+            border-color: #4b5bff;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(75, 91, 255, 0.2);
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
     <div class="container mx-auto p-4 max-w-5xl">
-        <div id="loading-view" class="text-center"><i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i><p class="mt-4 text-lg" id="loading-message">Cargando datos...</p></div>
+
+        <div id="loading-view" class="text-center">
+            <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
+            <p class="mt-4 text-lg" id="loading-message">Cargando aplicación...</p>
+        </div>
 
         <div id="login-view">
             <div class="bg-white p-8 rounded-xl shadow-lg max-w-sm mx-auto">
                 <div class="text-center mb-6">
-                    <img id="login-logo" src="https://placehold.co/200x80/6366f1/ffffff?text=Tu+Logo" alt="Logo del Restaurante" class="h-16 mx-auto mb-4 object-contain">
+                    <img id="login-logo" src="https://placehold.co/200x80/6366f1/ffffff?text=Tu+Logo" alt="Logo" class="h-16 mx-auto mb-4 object-contain">
                     <h1 class="text-2xl font-bold">CampiClock</h1>
                     <p class="text-slate-500">Introduce tu PIN de empleado</p>
                 </div>
@@ -66,59 +133,25 @@
                     <button data-action="enter-pin" data-value="7" class="pin-btn btn">7</button>
                     <button data-action="enter-pin" data-value="8" class="pin-btn btn">8</button>
                     <button data-action="enter-pin" data-value="9" class="pin-btn btn">9</button>
-                    <button data-action="clear-pin" class="pin-btn btn btn-secondary col-span-1"><i class="fas fa-times"></i></button>
+                    <button data-action="clear-pin" class="pin-btn btn btn-secondary"><i class="fas fa-times"></i></button>
                     <button data-action="enter-pin" data-value="0" class="pin-btn btn">0</button>
-                    <button data-action="login" class="pin-btn btn btn-primary col-span-1"><i class="fas fa-check"></i></button>
+                    <button data-action="login" class="pin-btn btn btn-primary"><i class="fas fa-check"></i></button>
                 </div>
                 <p id="login-error" class="text-red-500 text-center mt-4 h-4"></p>
             </div>
         </div>
 
         <div id="employee-view" class="bg-white p-8 rounded-xl shadow-lg">
-             <div class="flex justify-between items-center mb-6">
-                 <div><h2 class="text-2xl font-bold">Hola, <span id="employee-name"></span></h2><p class="text-slate-500">Listo para empezar tu jornada</p></div>
-                 <button data-action="logout" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
-             </div>
-             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                 <button data-action="clock-in" id="clock-in-btn" class="btn btn-success"><i class="fas fa-play-circle"></i> Iniciar Turno</button>
-                 <button data-action="clock-out" id="clock-out-btn" class="btn btn-danger" disabled><i class="fas fa-stop-circle"></i> Finalizar Turno</button>
-             </div>
-             </div>
+            </div>
 
         <div id="manager-view" class="bg-white p-8 rounded-xl shadow-lg">
-            <div class="flex justify-between items-center mb-6">
-                <div><h2 class="text-2xl font-bold">Panel de Gestión</h2><p class="text-slate-500">Supervisa los registros y gestiona tu equipo</p></div>
-                <button data-action="logout" class="btn btn-danger"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
             </div>
-            <div id="employees-content" class="hidden">
-                 <div class="flex justify-between items-center mb-4">
-                     <h3 class="text-xl font-semibold">Gestión de Empleados</h3>
-                     <button data-action="show-employee-form" class="btn btn-primary"><i class="fas fa-plus"></i> Añadir Empleado</button>
-                 </div>
-                 <div id="employee-form-container" class="hidden bg-slate-50 p-4 rounded-lg mb-4">
-                     <h3 id="form-title" class="text-lg font-bold mb-4">Añadir Nuevo Empleado</h3>
-                     <form id="employee-form">
-                         <input type="hidden" id="editing-user-id">
-                         <div><label for="employee-name-input" class="block text-sm font-medium text-slate-700">Nombre Completo</label><input type="text" id="employee-name-input" required class="form-input"></div>
-                         <div class="mt-4"><label for="employee-pin-input" class="block text-sm font-medium text-slate-700">PIN (4 dígitos, debe ser único)</label><input type="text" id="employee-pin-input" required pattern="[0-9]{4}" title="El PIN debe contener exactamente 4 dígitos." maxlength="4" class="form-input"></div>
-                         <div class="mt-4"><label for="employee-role-select" class="block text-sm font-medium text-slate-700">Rol</label><select id="employee-role-select" class="form-input"><option value="employee">Empleado</option><option value="manager">Administrador</option></select></div>
-                         <p id="modal-error" class="text-red-500 text-sm mt-2 h-4"></p>
-                         <div class="mt-6 flex justify-end gap-3">
-                             <button type="button" data-action="hide-employee-form" class="btn btn-secondary"><i class="fas fa-times"></i> Cancelar</button>
-                             <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button>
-                         </div>
-                     </form>
-                 </div>
-                 <div id="employee-list" class="space-y-2"></div>
-            </div>
-            </div>
-
     </div>
 
     <script type="module">
+        // --- CONFIGURACIÓN DE SUPABASE ---
         const SUPABASE_URL = 'https://thzalqqhxlqpnaswzraw.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoemFscXFoeGxxcG5hc3d6cmF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4ODg2MjcsImV4cCI6MjA3MTQ2NDYyN30.tworaVCWL7suWJqtbR7mIXEivdZaM3lBVtgJLgwRvYc';
-
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // --- ESTADO DE LA APLICACIÓN ---
@@ -130,7 +163,6 @@
         };
         let currentUser = null;
         let currentPin = '';
-        let activeShiftId = null;
 
         // --- FUNCIONES DE LA VISTA ---
         const showView = (viewName) => {
@@ -142,7 +174,7 @@
             document.getElementById('pin-display').textContent = '*'.repeat(currentPin.length);
         };
 
-        // --- LÓGICA DE AUTENTICACIÓN (MODIFICADA) ---
+        // --- LÓGICA DE AUTENTICACIÓN ---
         const enterPin = (num) => {
             if (currentPin.length < 4) {
                 currentPin += num;
@@ -165,106 +197,86 @@
             }
 
             try {
-                // Buscamos un usuario que tenga ese PIN
-                const { data: user, error } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('pin', currentPin)
-                    .single(); // .single() espera un único resultado
+                // 1. Llamar a la Edge Function segura para obtener un token
+                const { data, error: funcError } = await supabase.functions.invoke('login-with-pin', {
+                    body: { pin: currentPin },
+                });
 
-                if (error || !user) {
-                    console.error("Error de inicio de sesión o PIN no encontrado:", error);
-                    loginError.textContent = 'PIN incorrecto o no encontrado.';
-                    clearPin();
-                    return;
-                }
-                
-                // Guardamos el usuario y cargamos su vista
-                currentUser = user;
-                localStorage.setItem('currentUser', JSON.stringify(user)); // Guardar sesión
+                if (funcError) throw funcError;
 
-                if (currentUser.role === 'manager') {
-                    showView('manager');
-                    // await loadManagerView(); // Descomentar si tienes esta función
-                } else {
-                    showView('employee');
-                    // await loadEmployeeView(); // Descomentar si tienes esta función
-                }
+                // 2. Establecer la sesión oficial en Supabase con el token
+                const { error: sessionError } = await supabase.auth.setSession({
+                    access_token: data.access_token,
+                    refresh_token: data.refresh_token ?? '' 
+                });
+
+                if (sessionError) throw sessionError;
+
+                // 3. Ahora que la sesión es válida, cargar los datos del usuario
+                await loadUserAndRedirect();
 
             } catch (err) {
-                console.error("Error inesperado en login:", err);
-                loginError.textContent = 'Error inesperado. Inténtalo de nuevo.';
+                console.error("Error en login:", err);
+                loginError.textContent = 'PIN incorrecto o error en el servidor.';
                 clearPin();
             }
         };
 
-        const logout = () => {
+        const logout = async () => {
+            await supabase.auth.signOut();
             currentUser = null;
-            localStorage.removeItem('currentUser'); // Limpiar sesión
             currentPin = '';
             updatePinDisplay();
             showView('login');
         };
-        
-        const checkSession = () => {
-             const storedUser = localStorage.getItem('currentUser');
-             if (storedUser) {
-                 currentUser = JSON.parse(storedUser);
-                 if (currentUser.role === 'manager') {
-                    showView('manager');
-                    // await loadManagerView();
-                 } else {
-                    showView('employee');
-                    // await loadEmployeeView();
-                 }
-             } else {
-                showView('login');
-             }
-        }
 
-        // --- LÓGICA PARA GUARDAR EMPLEADO (MODIFICADA) ---
-        const saveEmployee = async (event) => {
-            event.preventDefault();
-            const form = event.target;
-            const id = form.querySelector('#editing-user-id').value;
-            const name = form.querySelector('#employee-name-input').value;
-            const pin = form.querySelector('#employee-pin-input').value;
-            const role = form.querySelector('#employee-role-select').value;
-            const modalError = document.getElementById('modal-error');
-            modalError.textContent = '';
+        // --- CARGA DE DATOS Y VISTAS ---
+        const loadUserAndRedirect = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                showView('login');
+                return;
+            }
             
-            if (pin.length !== 4) {
-                modalError.textContent = "El PIN debe tener 4 dígitos.";
+            // Cargar datos adicionales del usuario desde la tabla 'users'
+            const { data: userData, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('auth_id', user.id)
+                .single();
+
+            if (error || !userData) {
+                console.error("No se pudieron cargar los datos del perfil del usuario:", error);
+                await logout();
                 return;
             }
 
-            // El objeto userData ya no necesita el email
-            const userData = { name, pin, role };
+            currentUser = userData;
 
-            try {
-                if (id) { // Editando un usuario existente
-                    const { error } = await supabase.from('users').update(userData).eq('id', id);
-                    if (error) throw error;
-                } else { // Creando un nuevo usuario
-                    const { error } = await supabase.from('users').insert(userData);
-                    if (error) throw error;
-                }
-                // hideEmployeeForm(); // Ocultar el formulario tras guardar
-                // await populateEmployeeDropdown(); // Actualizar la lista de empleados
-            } catch (err) {
-                console.error("Error al guardar empleado:", err);
-                // Manejar el caso de PIN duplicado
-                if (err.message.includes('duplicate key value violates unique constraint "users_pin_key"')) {
-                     modalError.textContent = 'Error: Este PIN ya está en uso. Por favor, elige otro.';
-                } else {
-                     modalError.textContent = `Error: ${err.message}`;
-                }
+            // Redirigir a la vista correspondiente
+            if (currentUser.role === 'manager') {
+                // loadManagerView(); // <-- Aquí iría la lógica para cargar la vista de admin
+                showView('manager');
+            } else {
+                // loadEmployeeView(); // <-- Aquí iría la lógica para cargar la vista de empleado
+                showView('employee');
             }
         };
 
+        // --- INICIALIZACIÓN DE LA APLICACIÓN ---
+        const init = () => {
+            showView('loading');
 
-        // --- INICIALIZACIÓN Y EVENTOS ---
-        const setupEventListeners = () => {
+            // Comprobar si ya existe una sesión activa al cargar la página
+            supabase.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' || (event === 'INITIAL_SESSION' && session)) {
+                    loadUserAndRedirect();
+                } else if (event === 'SIGNED_OUT') {
+                    showView('login');
+                }
+            });
+
+            // Asignar eventos a los botones
             document.body.addEventListener('click', (e) => {
                 const button = e.target.closest('[data-action]');
                 if (!button) return;
@@ -276,27 +288,17 @@
                     case 'clear-pin': clearPin(); break;
                     case 'login': login(); break;
                     case 'logout': logout(); break;
-                    // ... aquí irían el resto de tus acciones (clock-in, etc.)
+                    // Aquí irían el resto de las acciones de tu app (fichajes, etc.)
                 }
             });
-            
-            const employeeForm = document.getElementById('employee-form');
-            if(employeeForm) {
-                employeeForm.addEventListener('submit', saveEmployee);
-            }
         };
 
-        const init = () => {
-            setupEventListeners();
-            checkSession(); // Comprobar si hay una sesión guardada
-        };
-
+        // Iniciar la aplicación
         init();
 
     </script>
 </body>
 </html>
-
 
 
 
