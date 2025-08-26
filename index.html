@@ -156,39 +156,33 @@
 <body class="flex items-center justify-center min-h-screen">
     <div class="container mx-auto p-4 max-w-5xl">
         <div id="loading-view" class="text-center"><i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i><p class="mt-4 text-lg" id="loading-message">Cargando datos...</p></div>
+        
         <div id="login-view">
             <div class="bg-white p-8 rounded-xl shadow-lg max-w-sm mx-auto">
                 <div class="text-center mb-6">
                     <img id="login-logo" src="https://placehold.co/200x80/6366f1/ffffff?text=Tu+Logo" alt="Logo del Restaurante" class="h-16 mx-auto mb-4 object-contain">
                     <h1 class="text-2xl font-bold">CampiClock</h1>
-                    <p class="text-slate-500">Introduce tu correo y PIN</p>
+                    <p class="text-slate-500">Introduce tu PIN de empleado</p>
                 </div>
-                <div class="mb-4">
-                    <label for="email-input" class="block text-sm font-medium text-slate-700">Correo</label>
-                    <input type="email" id="email-input" class="form-input" placeholder="ejemplo@correo.com">
-                </div>
-                <div class="mb-4">
-                    <label for="pin-input" class="block text-sm font-medium text-slate-700">PIN</label>
-                    <input type="password" id="pin-input" class="form-input" maxlength="4" placeholder="****">
-                    <div id="pin-display" class="bg-slate-100 text-center text-3xl font-mono tracking-widest h-16 flex items-center justify-center rounded-lg mt-2"></div>
-                </div>
-                <div class="grid grid-cols-3 gap-3">
-                    <button data-action="enter-pin" data-value="1" class="pin-btn btn">1</button>
-                    <button data-action="enter-pin" data-value="2" class="pin-btn btn">2</button>
-                    <button data-action="enter-pin" data-value="3" class="pin-btn btn">3</button>
-                    <button data-action="enter-pin" data-value="4" class="pin-btn btn">4</button>
-                    <button data-action="enter-pin" data-value="5" class="pin-btn btn">5</button>
-                    <button data-action="enter-pin" data-value="6" class="pin-btn btn">6</button>
-                    <button data-action="enter-pin" data-value="7" class="pin-btn btn">7</button>
-                    <button data-action="enter-pin" data-value="8" class="pin-btn btn">8</button>
-                    <button data-action="enter-pin" data-value="9" class="pin-btn btn">9</button>
-                    <button data-action="clear-pin" class="pin-btn btn btn-secondary btn-icon-text"><i class="fas fa-times"></i> Borrar</button>
-                    <button data-action="enter-pin" data-value="0" class="pin-btn btn">0</button>
-                    <button data-action="login" class="pin-btn btn btn-primary btn-icon-text"><i class="fas fa-check"></i> Entrar</button>
+                <div id="pin-display" class="bg-slate-100 text-center text-3xl font-mono tracking-widest h-16 flex items-center justify-center rounded-lg mb-4"></div>
+                <div class="grid grid-cols-3 gap-4">
+                    <button data-action="enter-pin" data-value="1" class="pin-btn">1</button>
+                    <button data-action="enter-pin" data-value="2" class="pin-btn">2</button>
+                    <button data-action="enter-pin" data-value="3" class="pin-btn">3</button>
+                    <button data-action="enter-pin" data-value="4" class="pin-btn">4</button>
+                    <button data-action="enter-pin" data-value="5" class="pin-btn">5</button>
+                    <button data-action="enter-pin" data-value="6" class="pin-btn">6</button>
+                    <button data-action="enter-pin" data-value="7" class="pin-btn">7</button>
+                    <button data-action="enter-pin" data-value="8" class="pin-btn">8</button>
+                    <button data-action="enter-pin" data-value="9" class="pin-btn">9</button>
+                    <button data-action="clear-pin" class="pin-btn bg-yellow-500 hover:bg-yellow-600 text-white"><i class="fas fa-times"></i></button>
+                    <button data-action="enter-pin" data-value="0" class="pin-btn">0</button>
+                    <button data-action="login" class="pin-btn bg-indigo-600 hover:bg-indigo-700 text-white"><i class="fas fa-check"></i></button>
                 </div>
                 <p id="login-error" class="text-red-500 text-center mt-4 h-4"></p>
             </div>
         </div>
+
         <div id="employee-view" class="bg-white p-8 rounded-xl shadow-lg">
             <div class="flex justify-between items-center mb-6">
                 <div><h2 class="text-2xl font-bold">Hola, <span id="employee-name"></span></h2><p class="text-slate-500">Listo para empezar tu jornada</p></div>
@@ -335,46 +329,9 @@
         const showView = (viewName) => { Object.values(views).forEach(v => v.style.display = 'none'); views[viewName].style.display = 'block'; };
         const updatePinDisplay = () => { document.getElementById('pin-display').textContent = '*'.repeat(currentPin.length); };
 
-        const testSupabaseConnection = async () => {
-            try {
-                console.log("Probando conexión a Supabase...");
-                const { data, error } = await supabase.from('users').select('id').limit(1);
-                if (error) throw new Error(`Fallo en la conexión a Supabase: ${error.message}`);
-                console.log("Conexión a Supabase exitosa.");
-                return true;
-            } catch (err) {
-                console.error("Error en testSupabaseConnection:", err);
-                throw err;
-            }
-        };
-
-        // --- INICIO DE LA MODIFICACIÓN ---
-        // Función para inicializar el sistema (la nueva versión)
-        const initializeSystem = async () => {
-            try {
-                console.log("🚀 Iniciando inicialización del sistema...");
-                
-                // Llamar a la función de base de datos para configuración inicial
-                const { data, error } = await supabase.rpc('initialize_system');
-                
-                if (error) {
-                    console.error("❌ Error en la inicialización:", error);
-                    throw error;
-                }
-                
-                if (data && data.success) {
-                    console.log("✅ Sistema inicializado correctamente:", data.message);
-                } else {
-                    console.log("ℹ️ No se requiere inicialización:", data.message);
-                }
-                
-                return data;
-            } catch (err) {
-                console.error("❌ Error global en inicialización:", err);
-                throw err;
-            }
-        };
-        // --- FIN DE LA MODIFICACIÓN ---
+        // No se necesita esta función, ya que el login será solo por PIN.
+        // La creación del primer administrador se deberá hacer manualmente en la tabla de Supabase.
+        const initializeSystem = async () => {};
 
         const loadCompanyLogoForLogin = async () => {
              try {
@@ -394,44 +351,40 @@
         const enterPin = (num) => { 
             if (currentPin.length < 4) { 
                 currentPin += num; 
-                document.getElementById('pin-input').value = currentPin;
                 updatePinDisplay(); 
             } 
         };
 
         const clearPin = () => { 
             currentPin = ''; 
-            document.getElementById('pin-input').value = '';
             updatePinDisplay(); 
             document.getElementById('login-error').textContent = ''; 
         };
 
+        // --- FUNCIÓN DE LOGIN MODIFICADA PARA USAR SOLO PIN ---
         const login = async () => {
             const loginError = document.getElementById('login-error');
             loginError.textContent = '';
-            const email = document.getElementById('email-input').value.trim();
-            const password = document.getElementById('pin-input').value;
-
-            if (!email || password.length !== 4) { 
-                loginError.textContent = 'Introduce un correo válido y un PIN de 4 dígitos.'; 
+            
+            if (currentPin.length !== 4) { 
+                loginError.textContent = 'El PIN debe tener 4 dígitos.'; 
                 return; 
             }
+
             try {
-                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-                
-                if (error) {
-                    throw new Error(error.message);
-                }
-                
-                const { data: userData, error: userError } = await supabase
+                // Se busca el usuario directamente en la tabla 'users' por el PIN
+                const { data: userData, error } = await supabase
                     .from('users')
                     .select('*')
-                    .eq('auth_id', data.user.id)
-                    .maybeSingle();
-
-                if (userError) throw new Error("Error al buscar usuario en la base de datos.");
-                if (!userData) throw new Error("El usuario de autenticación no existe en la tabla de usuarios.");
-
+                    .eq('pin', currentPin)
+                    .single(); // Se espera un único resultado
+                
+                if (error || !userData) {
+                    // Si hay un error o no se encuentra el usuario, el PIN es incorrecto
+                    throw new Error('PIN incorrecto. Intenta de nuevo.');
+                }
+                
+                // Si se encuentra el usuario, se guarda en la sesión y se procede
                 currentUser = userData;
                 if (currentUser.role === 'manager') { 
                     showView('manager'); 
@@ -440,9 +393,10 @@
                     showView('employee'); 
                     await loadEmployeeView(); 
                 }
+                
             } catch (err) {
                 console.error("Error en login:", err);
-                loginError.textContent = 'Correo o PIN incorrecto. Intenta de nuevo.';
+                loginError.textContent = err.message;
                 clearPin();
             }
         };
@@ -455,9 +409,8 @@
             currentUser = null; 
             currentPin = ''; 
             activeShiftId = null;
-            document.getElementById('email-input').value = '';
             updatePinDisplay();
-            await supabase.auth.signOut();
+            // No se cierra la sesión de auth.uid() ya que no se está utilizando
             showView('login');
         };
 
@@ -797,11 +750,9 @@
                     const { error } = await supabase.from('users').update({ name, email, pin, role }).eq('id', id);
                     if (error) throw error;
                 } else {
-                    const { data: authData, error: authError } = await supabase.auth.signUp({ email, password: pin });
-                    if (authError) throw authError;
-                    
-                    const { error: dbError } = await supabase.from('users').insert({ id: authData.user.id, auth_id: authData.user.id, name, email, pin, role });
-                    if(dbError) throw dbError;
+                     // Insertar un nuevo usuario directamente en la tabla sin usar Supabase Auth
+                     const { error } = await supabase.from('users').insert({ name, email, pin, role, id: crypto.randomUUID() });
+                     if (error) throw error;
                 }
                 hideEmployeeForm();
             } catch (err) {
@@ -957,53 +908,14 @@
             try {
                 console.log("🔄 Iniciando proceso de inicialización...");
                 
-                // --- Llamada a la nueva función de inicialización ---
-                await initializeSystem();
+                // Ya no se necesita esta llamada, ya que el login será solo por PIN.
+                // await initializeSystem();
                 
                 console.log("🖼️ Cargando logo de la empresa...");
                 await loadCompanyLogoForLogin();
                 
-                const { data: { session } } = await supabase.auth.getSession();
-                
-                if (session) {
-                    console.log("👤 Sesión detectada. Buscando datos de usuario...");
-                    
-                    const { data: userData, error } = await supabase
-                        .from('users')
-                        .select('*')
-                        .eq('auth_id', session.user.id)
-                        .maybeSingle();
-                    
-                    if (error) {
-                        console.error("❌ Error al buscar usuario:", error);
-                        await supabase.auth.signOut();
-                        showView('login');
-                        return;
-                    }
-                    
-                    if (userData) {
-                        console.log("✅ Usuario encontrado. Rol:", userData.role);
-                        
-                        currentUser = userData;
-                        
-                        if (currentUser.role === 'manager') {
-                            console.log("🏢 Cargando vista de manager...");
-                            showView('manager');
-                            await loadManagerView();
-                        } else {
-                            console.log("👥 Cargando vista de empleado...");
-                            showView('employee');
-                            await loadEmployeeView();
-                        }
-                    } else {
-                        console.warn("❓ No se encontraron datos de usuario. Cerrando sesión.");
-                        await supabase.auth.signOut();
-                        showView('login');
-                    }
-                } else {
-                    console.log("🚪 No hay sesión activa. Mostrando login.");
-                    showView('login');
-                }
+                // Ya no se comprueba la sesión de Supabase Auth
+                showView('login');
                 
                 console.log("🎉 Inicialización completada.");
                 setupEventListeners();
@@ -1012,8 +924,6 @@
                 console.error("❌ Fallo de inicialización:", err);
                 document.getElementById('loading-message').textContent = 'Error al cargar la aplicación. Por favor, revisa la consola para más detalles.';
                 document.getElementById('loading-message').classList.add('text-red-500');
-                
-                // Opcional: Mostrar un modal o mensaje de error más descriptivo
                 showErrorModal('Error de Inicialización', err.message);
             }
         };
