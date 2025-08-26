@@ -348,66 +348,38 @@
             }
         };
 
-        const setupInitialData = async () => {
+        // --- INICIO DE LA MODIFICACIÓN ---
+        // Función para inicializar el sistema (la nueva versión)
+        const initializeSystem = async () => {
             try {
-                console.log("🚀 Iniciando setupInitialData...");
+                console.log("🚀 Iniciando inicialización del sistema...");
                 
-                // Verificar si ya existe un administrador
-                const { data: existingAdmins, error: adminError } = await supabase
-                    .from('users')
-                    .select('id, role')
-                    .eq('role', 'manager')
-                    .limit(1);
+                // Llamar a la función de base de datos para configuración inicial
+                const { data, error } = await supabase.rpc('initialize_system');
                 
-                if (adminError) {
-                    console.error("❌ Error al verificar usuarios administradores:", adminError);
-                    throw new Error(`Error al verificar usuarios administradores: ${adminError.message}`);
+                if (error) {
+                    console.error("❌ Error en la inicialización:", error);
+                    throw error;
                 }
                 
-                // Si no existe ningún administrador, crear uno
-                if (!existingAdmins || existingAdmins.length === 0) {
-                    console.log("🔍 No se encontraron administradores, intentando crear uno...");
-                    
-                    const { data: { session } } = await supabase.auth.getSession();
-                    
-                    // Preparar datos para insertar
-                    const adminUserData = {
-                        name: "Admin",
-                        pin: "0000", 
-                        role: "manager"
-                    };
-
-                    // Añadir auth_id si está disponible
-                    if (session && session.user) {
-                        adminUserData.auth_id = session.user.id;
-                    }
-                    
-                    // Intentar insertar usuario administrador
-                    const { error: insertError } = await supabase.from('users').insert(adminUserData);
-                    
-                    if (insertError) {
-                        console.error("❌ Error al crear usuario administrador:", insertError);
-                        
-                        // Si el error es por duplicado, podríamos querer manejarlo de manera diferente
-                        if (insertError.code === '23505') {
-                            console.warn("⚠️ Ya existe un registro similar. Continuando...");
-                        } else {
-                            throw new Error(`Error al crear usuario administrador: ${insertError.message}`);
-                        }
-                    }
-                    
-                    console.log("✅ Proceso de creación de administrador completado.");
+                if (data && data.success) {
+                    console.log("✅ Sistema inicializado correctamente:", data.message);
+                } else {
+                    console.log("ℹ️ No se requiere inicialización:", data.message);
                 }
+                
+                return data;
             } catch (err) {
-                console.error("❌ Error global en setupInitialData:", err);
+                console.error("❌ Error global en inicialización:", err);
                 throw err;
             }
         };
+        // --- FIN DE LA MODIFICACIÓN ---
 
         const loadCompanyLogoForLogin = async () => {
              try {
                 const { data, error } = await supabase.from('company_details').select('logo').limit(1).maybeSingle();
-                if (error && error.code !== 'PGRST116') { // Ignora el error si la tabla está vacía
+                if (error && error.code !== 'PGRST116') {
                     console.warn("No se pudo cargar el logo:", error.message);
                     return;
                 }
@@ -445,7 +417,6 @@
                 return; 
             }
             try {
-                // Para el login, la contraseña es el PIN
                 const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                 
                 if (error) {
@@ -822,15 +793,13 @@
             if (pin.length !== 4) { modalError.textContent = "El PIN debe tener 4 dígitos."; return; }
             
             try {
-                if (id) { // Editando
+                if (id) {
                     const { error } = await supabase.from('users').update({ name, email, pin, role }).eq('id', id);
                     if (error) throw error;
-                } else { // Creando
-                    // 1. Crear usuario en Auth
+                } else {
                     const { data: authData, error: authError } = await supabase.auth.signUp({ email, password: pin });
                     if (authError) throw authError;
                     
-                    // 2. Insertar en tabla 'users'
                     const { error: dbError } = await supabase.from('users').insert({ id: authData.user.id, auth_id: authData.user.id, name, email, pin, role });
                     if(dbError) throw dbError;
                 }
@@ -896,7 +865,7 @@
             if(!employeeId) { alert("Por favor, selecciona un empleado."); return; }
             const monthYear = document.getElementById('month-select').value;
             const { data: shifts, error: shiftsError } = await supabase.from('shifts').select('*').eq('user_id', employeeId)
-                .gte('start_time', `${monthYear}-01T00:00:00Z`).lt('start_time', `${monthYear}-32T00:00:00Z`); // Simple date filter
+                .gte('start_time', `${monthYear}-01T00:00:00Z`).lt('start_time', `${monthYear}-32T00:00:00Z`);
             
             const { data: user, error: userError } = await supabase.from('users').select('*').eq('id', employeeId).maybeSingle();
             const { data: company, error: companyError } = await supabase.from('company_details').select('*').maybeSingle();
@@ -988,10 +957,8 @@
             try {
                 console.log("🔄 Iniciando proceso de inicialización...");
                 
-                await testSupabaseConnection();
-                
-                console.log("📦 Configurando datos iniciales...");
-                await setupInitialData();
+                // --- Llamada a la nueva función de inicialización ---
+                await initializeSystem();
                 
                 console.log("🖼️ Cargando logo de la empresa...");
                 await loadCompanyLogoForLogin();
@@ -1051,7 +1018,6 @@
             }
         };
 
-        // Función opcional para mostrar modal de error
         function showErrorModal(title, message) {
             const modal = document.createElement('div');
             modal.innerHTML = `
