@@ -317,7 +317,7 @@
     </div>
     <script type="module">
         const SUPABASE_URL = 'https://thzalqqhxlqpnaswzraw.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoemFscXFoeGxxcG5hc3d6cmF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4ODg2MjcsImV4cCI6MjA3MTQ2NDYyN30.tworaVCWL7suWJqtbR7mIXEivdZaM3lBVtgJLgwRvYc';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoemFscXFoeGxxcG5hc3d6cmF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4ODg2MjcsImV4cCI6MjA3MTQyN30.tworaVCWL7suWJqtbR7mIXEivdZaM3lBVtgJLgwRvYc';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const views = { loading: document.getElementById('loading-view'), login: document.getElementById('login-view'), employee: document.getElementById('employee-view'), manager: document.getElementById('manager-view') };
@@ -333,8 +333,8 @@
             try {
                 console.log("🚀 Iniciando inicialización del sistema...");
                 
-                // Llamar a la función de base de datos para configuración inicial
-                const { data, error } = await supabase.rpc('initialize_system');
+                // Asegurar que exista un administrador
+                const { data, error } = await supabase.rpc('ensure_admin_exists');
                 
                 if (error) {
                     console.error("❌ Error en la inicialización:", error);
@@ -344,12 +344,6 @@
                 // Log detallado
                 console.log("Resultado de inicialización:", JSON.stringify(data, null, 2));
                 
-                if (data && data.success) {
-                    console.log("✅ Sistema inicializado correctamente:", data.message);
-                } else {
-                    console.log("ℹ️ No se requiere inicialización:", data.message);
-                }
-                
                 return data;
             } catch (err) {
                 console.error("❌ Error global en inicialización:", err);
@@ -357,20 +351,35 @@
             }
         };
 
-        const authenticateWithPin = async (pin) => { // Eliminado el tipado de TypeScript
+        const authenticateWithPin = async (pin) => {
             try {
-                const { data, error } = await supabase.rpc('authenticate_with_pin', { input_pin: pin });
+                // Primero, intentar asegurar que exista un administrador
+                const ensureAdminResult = await supabase.rpc('ensure_admin_exists');
+                console.log("Resultado de ensure_admin_exists:", ensureAdminResult);
+
+                // Luego, intentar autenticar con el PIN
+                const { data, error } = await supabase.rpc('authenticate_with_pin_debug', { 
+                    input_pin: pin 
+                });
                 
-                console.log("Resultado de autenticación:", JSON.stringify(data, null, 2));
+                console.log("Resultado de autenticación detallado:", JSON.stringify(data, null, 2));
                 
                 if (error) {
                     console.error("❌ Error de autenticación:", error);
                     throw error;
                 }
                 
+                if (!data.success) {
+                    // Mostrar mensaje de error específico
+                    throw new Error(data.message || 'Autenticación fallida');
+                }
+                
                 return data;
             } catch (err) {
+                // Manejar cualquier error de autenticación
                 console.error("❌ Error en autenticación:", err);
+                // Mostrar mensaje de error al usuario
+                showErrorModal('Error de Autenticación', err.message || 'No se pudo iniciar sesión');
                 throw err;
             }
         };
@@ -387,22 +396,26 @@
             try {
                 const authResult = await authenticateWithPin(currentPin);
                 
-                if (authResult && authResult.success && authResult.user) {
-                    currentUser = authResult.user;
-                    if (currentUser.role === 'manager') { 
-                        showView('manager'); 
-                        await loadManagerView(); 
-                    } else { 
-                        showView('employee'); 
-                        await loadEmployeeView(); 
-                    }
-                } else {
-                    throw new Error(authResult.message || 'PIN incorrecto.');
+                // La función authenticateWithPin ya gestiona los errores, aquí solo procesamos el éxito
+                const userDetails = authResult.user_details;
+                
+                currentUser = {
+                    id: userDetails.id,
+                    name: userDetails.name,
+                    role: userDetails.role
+                };
+
+                if (currentUser.role === 'manager') { 
+                    showView('manager'); 
+                    await loadManagerView(); 
+                } else { 
+                    showView('employee'); 
+                    await loadEmployeeView(); 
                 }
                 
             } catch (err) {
-                console.error("Error en login:", err);
-                loginError.textContent = err.message;
+                // El error ya se muestra en el modal a través de authenticateWithPin
+                console.log("Fallo en el proceso de login.");
                 clearPin();
             }
         };
@@ -416,10 +429,7 @@
                 console.log("🖼️ Cargando logo de la empresa...");
                 await loadCompanyLogoForLogin();
                 
-                // Al usar RPC para el login, no necesitamos comprobar la sesión de Supabase Auth aquí.
-                // Siempre se mostrará la pantalla de login al inicio.
                 showView('login');
-                
                 console.log("🎉 Inicialización completada.");
                 setupEventListeners();
                 
