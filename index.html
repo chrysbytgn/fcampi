@@ -316,7 +316,8 @@
         const showView = (viewName) => { Object.values(views).forEach(v => v.style.display = 'none'); views[viewName].style.display = 'block'; };
         const updatePinDisplay = () => { document.getElementById('pin-display').textContent = '*'.repeat(currentPin.length); };
         
-        // Función para inicializar el sistema
+        // --- INICIO DE LA MODIFICACIÓN ---
+
         const initializeSystem = async () => {
             try {
                 console.log("🚀 Iniciando inicialización del sistema...");
@@ -339,8 +340,7 @@
             }
         };
 
-        // Función de autenticación con PIN mejorada
-        const authenticateWithPin = async (pin) => { // Elimino la sintaxis de TypeScript
+        const authenticateWithPin = async (pin) => {
             try {
                 // Primero, intentar asegurar que exista un administrador
                 const ensureAdminResult = await supabase.rpc('ensure_admin_exists');
@@ -358,15 +358,11 @@
                     throw error;
                 }
                 
-                // --- INICIO DEL CÓDIGO CORREGIDO ---
+                // Código corregido para manejar el error
                 if (!data.success) {
                   throw new Error(data.message || 'PIN incorrecto');
                 }
-                // Si success es true, continuar con la navegación...
-                const userDetails = data.user_details;
-                // --- FIN DEL CÓDIGO CORREGIDO ---
-                
-                // Aquí ya no hace falta navegar porque la lógica está en la función 'login'
+                // Si success es true, continuar...
                 
                 return data;
             } catch (err) {
@@ -392,7 +388,6 @@
             try {
                 const authResult = await authenticateWithPin(currentPin);
                 
-                // La función authenticateWithPin ya gestiona los errores, aquí solo procesamos el éxito
                 const userDetails = authResult.user_details;
                 
                 currentUser = {
@@ -437,6 +432,8 @@
             }
         };
         
+        // --- FIN DE LA MODIFICACIÓN ---
+
         const loadCompanyLogoForLogin = async () => {
              try {
                 const { data, error } = await supabase.from('company_details').select('logo').limit(1).maybeSingle();
@@ -809,10 +806,10 @@
             if (pin.length !== 4) { modalError.textContent = "El PIN debe tener 4 dígitos."; return; }
             
             try {
-                if (id) {
+                if (id) { // Editando
                     const { error } = await supabase.from('users').update({ name, email, pin, role }).eq('id', id);
                     if (error) throw error;
-                } else {
+                } else { // Creando
                     const { error } = await supabase.from('users').insert({ name, email, pin, role });
                     if(error) throw error;
                 }
