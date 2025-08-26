@@ -103,28 +103,34 @@
             document.getElementById('login-error').textContent = '';
         };
 
+        // --- FUNCIÓN DE LOGIN ACTUALIZADA ---
         const login = async () => {
             const loginError = document.getElementById('login-error');
             loginError.textContent = '';
 
             try {
-                // Llamada a la Edge Function solo con el PIN
-                const { data, error } = await supabase.functions.invoke('login-with-pin', {
+                const response = await supabase.functions.invoke('login-with-pin', {
                     body: { pin: currentPin }
                 });
 
-                if (error) throw error;
+                // Manejar errores devueltos por la función de forma explícita
+                if (response.error) {
+                    throw response.error;
+                }
+                if (response.data && response.data.error) {
+                    throw new Error(response.data.error);
+                }
 
                 const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-                    access_token: data.session.access_token,
-                    refresh_token: data.session.refresh_token,
+                    access_token: response.data.session.access_token,
+                    refresh_token: response.data.session.refresh_token,
                 });
 
                 if (sessionError) throw sessionError;
 
             } catch (err) {
                 console.error("Error en login:", err);
-                loginError.textContent = 'PIN incorrecto o error del servidor.';
+                loginError.textContent = err.message || 'PIN incorrecto o error del servidor.';
                 clearPin();
             }
         };
