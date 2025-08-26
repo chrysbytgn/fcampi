@@ -156,7 +156,6 @@
 <body class="flex items-center justify-center min-h-screen">
     <div class="container mx-auto p-4 max-w-5xl">
         <div id="loading-view" class="text-center"><i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i><p class="mt-4 text-lg" id="loading-message">Cargando datos...</p></div>
-        
         <div id="login-view">
             <div class="bg-white p-8 rounded-xl shadow-lg max-w-sm mx-auto">
                 <div class="text-center mb-6">
@@ -182,7 +181,6 @@
                 <p id="login-error" class="text-red-500 text-center mt-4 h-4"></p>
             </div>
         </div>
-
         <div id="employee-view" class="bg-white p-8 rounded-xl shadow-lg">
             <div class="flex justify-between items-center mb-6">
                 <div><h2 class="text-2xl font-bold">Hola, <span id="employee-name"></span></h2><p class="text-slate-500">Listo para empezar tu jornada</p></div>
@@ -328,10 +326,112 @@
 
         const showView = (viewName) => { Object.values(views).forEach(v => v.style.display = 'none'); views[viewName].style.display = 'block'; };
         const updatePinDisplay = () => { document.getElementById('pin-display').textContent = '*'.repeat(currentPin.length); };
+        
+        // --- INICIO DE LA MODIFICACIÓN ---
 
-        // No se necesita esta función, ya que el login será solo por PIN.
-        // La creación del primer administrador se deberá hacer manualmente en la tabla de Supabase.
-        const initializeSystem = async () => {};
+        const initializeSystem = async () => {
+            try {
+                console.log("🚀 Iniciando inicialización del sistema...");
+                
+                // Llamar a la función de base de datos para configuración inicial
+                const { data, error } = await supabase.rpc('initialize_system');
+                
+                if (error) {
+                    console.error("❌ Error en la inicialización:", error);
+                    throw error;
+                }
+                
+                // Log detallado
+                console.log("Resultado de inicialización:", JSON.stringify(data, null, 2));
+                
+                if (data && data.success) {
+                    console.log("✅ Sistema inicializado correctamente:", data.message);
+                } else {
+                    console.log("ℹ️ No se requiere inicialización:", data.message);
+                }
+                
+                return data;
+            } catch (err) {
+                console.error("❌ Error global en inicialización:", err);
+                throw err;
+            }
+        };
+
+        const authenticateWithPin = async (pin) => { // Eliminado el tipado de TypeScript
+            try {
+                const { data, error } = await supabase.rpc('authenticate_with_pin', { input_pin: pin });
+                
+                console.log("Resultado de autenticación:", JSON.stringify(data, null, 2));
+                
+                if (error) {
+                    console.error("❌ Error de autenticación:", error);
+                    throw error;
+                }
+                
+                return data;
+            } catch (err) {
+                console.error("❌ Error en autenticación:", err);
+                throw err;
+            }
+        };
+
+        const login = async () => {
+            const loginError = document.getElementById('login-error');
+            loginError.textContent = '';
+            
+            if (currentPin.length !== 4) { 
+                loginError.textContent = 'El PIN debe tener 4 dígitos.'; 
+                return; 
+            }
+
+            try {
+                const authResult = await authenticateWithPin(currentPin);
+                
+                if (authResult && authResult.success && authResult.user) {
+                    currentUser = authResult.user;
+                    if (currentUser.role === 'manager') { 
+                        showView('manager'); 
+                        await loadManagerView(); 
+                    } else { 
+                        showView('employee'); 
+                        await loadEmployeeView(); 
+                    }
+                } else {
+                    throw new Error(authResult.message || 'PIN incorrecto.');
+                }
+                
+            } catch (err) {
+                console.error("Error en login:", err);
+                loginError.textContent = err.message;
+                clearPin();
+            }
+        };
+
+        const init = async () => {
+            showView('loading');
+            try {
+                console.log("🔄 Iniciando proceso de inicialización...");
+                await initializeSystem();
+                
+                console.log("🖼️ Cargando logo de la empresa...");
+                await loadCompanyLogoForLogin();
+                
+                // Al usar RPC para el login, no necesitamos comprobar la sesión de Supabase Auth aquí.
+                // Siempre se mostrará la pantalla de login al inicio.
+                showView('login');
+                
+                console.log("🎉 Inicialización completada.");
+                setupEventListeners();
+                
+            } catch (err) {
+                console.error("❌ Fallo de inicialización:", err);
+                document.getElementById('loading-message').textContent = 'Error al cargar la aplicación. Revisa la consola.';
+                document.getElementById('loading-message').classList.add('text-red-500');
+                showErrorModal('Error de Inicialización', err.message);
+            }
+        };
+        
+        // --- FIN DE LA MODIFICACIÓN ---
 
         const loadCompanyLogoForLogin = async () => {
              try {
@@ -361,46 +461,6 @@
             document.getElementById('login-error').textContent = ''; 
         };
 
-        // --- FUNCIÓN DE LOGIN MODIFICADA PARA USAR SOLO PIN ---
-        const login = async () => {
-            const loginError = document.getElementById('login-error');
-            loginError.textContent = '';
-            
-            if (currentPin.length !== 4) { 
-                loginError.textContent = 'El PIN debe tener 4 dígitos.'; 
-                return; 
-            }
-
-            try {
-                // Se busca el usuario directamente en la tabla 'users' por el PIN
-                const { data: userData, error } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('pin', currentPin)
-                    .single(); // Se espera un único resultado
-                
-                if (error || !userData) {
-                    // Si hay un error o no se encuentra el usuario, el PIN es incorrecto
-                    throw new Error('PIN incorrecto. Intenta de nuevo.');
-                }
-                
-                // Si se encuentra el usuario, se guarda en la sesión y se procede
-                currentUser = userData;
-                if (currentUser.role === 'manager') { 
-                    showView('manager'); 
-                    await loadManagerView(); 
-                } else { 
-                    showView('employee'); 
-                    await loadEmployeeView(); 
-                }
-                
-            } catch (err) {
-                console.error("Error en login:", err);
-                loginError.textContent = err.message;
-                clearPin();
-            }
-        };
-
         const logout = async () => {
             if (shiftsSubscription) await supabase.removeChannel(shiftsSubscription);
             if (usersSubscription) await supabase.removeChannel(usersSubscription);
@@ -410,7 +470,6 @@
             currentPin = ''; 
             activeShiftId = null;
             updatePinDisplay();
-            // No se cierra la sesión de auth.uid() ya que no se está utilizando
             showView('login');
         };
 
@@ -746,13 +805,12 @@
             if (pin.length !== 4) { modalError.textContent = "El PIN debe tener 4 dígitos."; return; }
             
             try {
-                if (id) {
+                if (id) { // Editando
                     const { error } = await supabase.from('users').update({ name, email, pin, role }).eq('id', id);
                     if (error) throw error;
-                } else {
-                     // Insertar un nuevo usuario directamente en la tabla sin usar Supabase Auth
-                     const { error } = await supabase.from('users').insert({ name, email, pin, role, id: crypto.randomUUID() });
-                     if (error) throw error;
+                } else { // Creando
+                    const { error } = await supabase.from('users').insert({ name, email, pin, role });
+                    if(error) throw error;
                 }
                 hideEmployeeForm();
             } catch (err) {
@@ -902,32 +960,7 @@
             
             window.jsPDF = window.jspdf.jsPDF;
         };
-
-        const init = async () => {
-            showView('loading');
-            try {
-                console.log("🔄 Iniciando proceso de inicialización...");
-                
-                // Ya no se necesita esta llamada, ya que el login será solo por PIN.
-                // await initializeSystem();
-                
-                console.log("🖼️ Cargando logo de la empresa...");
-                await loadCompanyLogoForLogin();
-                
-                // Ya no se comprueba la sesión de Supabase Auth
-                showView('login');
-                
-                console.log("🎉 Inicialización completada.");
-                setupEventListeners();
-                
-            } catch (err) {
-                console.error("❌ Fallo de inicialización:", err);
-                document.getElementById('loading-message').textContent = 'Error al cargar la aplicación. Por favor, revisa la consola para más detalles.';
-                document.getElementById('loading-message').classList.add('text-red-500');
-                showErrorModal('Error de Inicialización', err.message);
-            }
-        };
-
+        
         function showErrorModal(title, message) {
             const modal = document.createElement('div');
             modal.innerHTML = `
