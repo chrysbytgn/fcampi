@@ -370,55 +370,66 @@
                     
                     const { data: { session } } = await supabase.auth.getSession();
                     
-                    // Verificar si hay una sesión activa
-                    if (session && session.user) {
-                        const { error: insertError } = await supabase.from('users').insert({
-                            name: "Admin",
-                            email: session.user.email || 'admin@ejemplo.com',
-                            pin: "0000", 
-                            role: "manager", 
-                            auth_id: session.user.id,
-                            company_id: null  // Asegúrate de manejar esto según tu lógica de negocio
-                        });
-                        
-                        if (insertError) {
-                            console.error("❌ Error al crear usuario administrador:", insertError);
-                            throw new Error(`Error al crear usuario administrador: ${insertError.message}`);
-                        }
-                        
-                        console.log("✅ Usuario administrador creado exitosamente.");
-                    } else {
-                        // Si no hay sesión, intentar crear una
+                    // Si no hay sesión, intentar crear una
+                    if (!session) {
                         try {
+                            console.log("No hay sesión activa, intentando registrar admin@ejemplo.com");
                             const { data: authData, error: authError } = await supabase.auth.signUp({
                                 email: 'admin@ejemplo.com',
-                                password: 'AdminPassword123!' // Asegúrate de usar una contraseña segura
+                                password: 'AdminPassword123!' // Deberías cambiar esta contraseña inmediatamente
                             });
-
+        
                             if (authError) {
                                 console.error("❌ Error al crear usuario de autenticación:", authError);
                                 throw authError;
                             }
-
-                            // Insertar usuario con el nuevo ID de autenticación
+        
                             const { error: insertError } = await supabase.from('users').insert({
+                                id: authData.user.id,
                                 name: "Admin",
                                 email: 'admin@ejemplo.com',
                                 pin: "0000", 
-                                role: "manager", 
-                                auth_id: authData.user.id,
-                                company_id: null
+                                role: "manager"
                             });
-
+                            
                             if (insertError) {
                                 console.error("❌ Error al crear usuario administrador:", insertError);
-                                throw insertError;
+                                throw new Error(`Error al crear usuario administrador: ${insertError.message}`);
                             }
-
+                            
                             console.log("✅ Usuario administrador creado exitosamente con nueva autenticación.");
+                            
                         } catch (signUpError) {
                             console.error("❌ Error completo en signup:", signUpError);
                             throw signUpError;
+                        }
+                    } else {
+                        // Si hay una sesión, verificar si es de un usuario no registrado
+                        const { data: existingUser, error: existingUserError } = await supabase
+                            .from('users')
+                            .select('id')
+                            .eq('auth_id', session.user.id)
+                            .single();
+
+                        if (existingUserError && existingUserError.code === 'PGRST116') { // No se encontró el usuario
+                            // Insertar el usuario de la sesión actual
+                            const { error: insertError } = await supabase.from('users').insert({
+                                id: session.user.id,
+                                name: "Admin",
+                                email: session.user.email || 'admin@ejemplo.com',
+                                pin: "0000",
+                                role: "manager"
+                            });
+
+                            if (insertError) {
+                                console.error("❌ Error al insertar usuario de la sesión:", insertError);
+                                throw new Error(`Error al insertar usuario de la sesión: ${insertError.message}`);
+                            }
+                            console.log("✅ Usuario administrador insertado desde sesión existente.");
+                        } else if (existingUserError) {
+                            throw existingUserError;
+                        } else {
+                            console.log("✅ Usuario administrador ya existe en la base de datos.");
                         }
                     }
                 }
@@ -430,7 +441,7 @@
 
         const loadCompanyLogoForLogin = async () => {
              try {
-                const { data, error } = await supabase.from('company_details').select('logo').limit(1).single();
+                const { data, error } = await supabase.from('company_details').select('logo').limit(1).maybeSingle();
                 if (error && error.code !== 'PGRST116') { // Ignora el error si la tabla está vacía
                     console.warn("No se pudo cargar el logo:", error.message);
                     return;
@@ -964,7 +975,7 @@
             doc.setFontSize(14);
             doc.text(`Total Horas Aprobadas: ${(totalMinutes / 60).toFixed(2)}`, 14, finalY + 10);
             
-            const { data: signature } = await supabase.from('signatures').select('signature_data').eq('user_id', employeeId).eq('month_year', monthYear).single();
+            const { data: signature } = await supabase.from('signatures').select('signature_data').eq('user_id', employeeId).eq('month_year', monthYear).maybeSingle();
             if(signature) {
                 doc.text("Firma del Empleado:", 14, finalY + 20);
                 doc.addImage(signature.signature_data, 'PNG', 14, finalY + 25, 60, 30);
