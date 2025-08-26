@@ -370,68 +370,33 @@
                     
                     const { data: { session } } = await supabase.auth.getSession();
                     
-                    // Si no hay sesión, intentar crear una
-                    if (!session) {
-                        try {
-                            console.log("No hay sesión activa, intentando registrar admin@ejemplo.com");
-                            const { data: authData, error: authError } = await supabase.auth.signUp({
-                                email: 'admin@ejemplo.com',
-                                password: 'AdminPassword123!' // Deberías cambiar esta contraseña inmediatamente
-                            });
-        
-                            if (authError) {
-                                console.error("❌ Error al crear usuario de autenticación:", authError);
-                                throw authError;
-                            }
-        
-                            const { error: insertError } = await supabase.from('users').insert({
-                                id: authData.user.id,
-                                name: "Admin",
-                                email: 'admin@ejemplo.com',
-                                pin: "0000", 
-                                role: "manager"
-                            });
-                            
-                            if (insertError) {
-                                console.error("❌ Error al crear usuario administrador:", insertError);
-                                throw new Error(`Error al crear usuario administrador: ${insertError.message}`);
-                            }
-                            
-                            console.log("✅ Usuario administrador creado exitosamente con nueva autenticación.");
-                            
-                        } catch (signUpError) {
-                            console.error("❌ Error completo en signup:", signUpError);
-                            throw signUpError;
-                        }
-                    } else {
-                        // Si hay una sesión, verificar si es de un usuario no registrado
-                        const { data: existingUser, error: existingUserError } = await supabase
-                            .from('users')
-                            .select('id')
-                            .eq('auth_id', session.user.id)
-                            .single();
+                    // Preparar datos para insertar
+                    const adminUserData = {
+                        name: "Admin",
+                        pin: "0000", 
+                        role: "manager"
+                    };
 
-                        if (existingUserError && existingUserError.code === 'PGRST116') { // No se encontró el usuario
-                            // Insertar el usuario de la sesión actual
-                            const { error: insertError } = await supabase.from('users').insert({
-                                id: session.user.id,
-                                name: "Admin",
-                                email: session.user.email || 'admin@ejemplo.com',
-                                pin: "0000",
-                                role: "manager"
-                            });
-
-                            if (insertError) {
-                                console.error("❌ Error al insertar usuario de la sesión:", insertError);
-                                throw new Error(`Error al insertar usuario de la sesión: ${insertError.message}`);
-                            }
-                            console.log("✅ Usuario administrador insertado desde sesión existente.");
-                        } else if (existingUserError) {
-                            throw existingUserError;
+                    // Añadir auth_id si está disponible
+                    if (session && session.user) {
+                        adminUserData.auth_id = session.user.id;
+                    }
+                    
+                    // Intentar insertar usuario administrador
+                    const { error: insertError } = await supabase.from('users').insert(adminUserData);
+                    
+                    if (insertError) {
+                        console.error("❌ Error al crear usuario administrador:", insertError);
+                        
+                        // Si el error es por duplicado, podríamos querer manejarlo de manera diferente
+                        if (insertError.code === '23505') {
+                            console.warn("⚠️ Ya existe un registro similar. Continuando...");
                         } else {
-                            console.log("✅ Usuario administrador ya existe en la base de datos.");
+                            throw new Error(`Error al crear usuario administrador: ${insertError.message}`);
                         }
                     }
+                    
+                    console.log("✅ Proceso de creación de administrador completado.");
                 }
             } catch (err) {
                 console.error("❌ Error global en setupInitialData:", err);
@@ -491,9 +456,10 @@
                     .from('users')
                     .select('*')
                     .eq('auth_id', data.user.id)
-                    .single();
+                    .maybeSingle();
 
-                if (userError) throw new Error("El usuario de autenticación no existe en la tabla de usuarios.");
+                if (userError) throw new Error("Error al buscar usuario en la base de datos.");
+                if (!userData) throw new Error("El usuario de autenticación no existe en la tabla de usuarios.");
 
                 currentUser = userData;
                 if (currentUser.role === 'manager') { 
@@ -932,8 +898,8 @@
             const { data: shifts, error: shiftsError } = await supabase.from('shifts').select('*').eq('user_id', employeeId)
                 .gte('start_time', `${monthYear}-01T00:00:00Z`).lt('start_time', `${monthYear}-32T00:00:00Z`); // Simple date filter
             
-            const { data: user, error: userError } = await supabase.from('users').select('*').eq('id', employeeId).single();
-            const { data: company, error: companyError } = await supabase.from('company_details').select('*').single();
+            const { data: user, error: userError } = await supabase.from('users').select('*').eq('id', employeeId).maybeSingle();
+            const { data: company, error: companyError } = await supabase.from('company_details').select('*').maybeSingle();
 
             if (shiftsError || userError || companyError) { alert("Error al obtener datos para el PDF."); return; }
 
@@ -1039,7 +1005,7 @@
                         .from('users')
                         .select('*')
                         .eq('auth_id', session.user.id)
-                        .single();
+                        .maybeSingle();
                     
                     if (error) {
                         console.error("❌ Error al buscar usuario:", error);
