@@ -324,10 +324,8 @@
         </div>
     </div>
     <script type="module">
-        // (El código JavaScript no ha sido modificado)
         const SUPABASE_URL = 'https://thzalqqhxlqpnaswzraw.supabase.co';
-        const SUPABASE_ANON_KEY = 
-'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoemFscXFoeGxxcG5hc3d6cmF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4ODg2MjcsImV4cCI6MjA3MTQ2NDYyN30.tworaVCWL7suWJqtbR7mIXEivdZaM3lBVtgJLgwRvYc'
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoemFscXFoeGxxcG5hc3d6cmF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4ODg2MjcsImV4cCI6MjA3MTQ2NDYyN30.tworaVCWL7suWJqtbR7mIXEivdZaM3lBVtgJLgwRvYc';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const views = { loading: document.getElementById('loading-view'), login: document.getElementById('login-view'), employee: document.getElementById('employee-view'), manager: document.getElementById('manager-view') };
@@ -342,7 +340,7 @@
                 console.log("Probando conexión a Supabase...");
                 const { data, error } = await supabase.from('users').select('id').limit(1);
                 if (error) throw new Error(`Fallo en la conexión a Supabase: ${error.message}`);
-                console.log("Conexión a Supabase exitosa, datos recibidos:", data);
+                console.log("Conexión a Supabase exitosa.");
                 return true;
             } catch (err) {
                 console.error("Error en testSupabaseConnection:", err);
@@ -352,35 +350,93 @@
 
         const setupInitialData = async () => {
             try {
-                console.log("Iniciando setupInitialData...");
-                const { data: session } = await supabase.auth.getSession();
-                if (!session.session) throw new Error("No hay sesión activa para inicializar datos.");
-                const { data, error } = await supabase.from('users').select('id, role, auth_id').eq('role', 'manager').eq('auth_id', session.session.user.id);
-                if (error) throw new Error(`Error al verificar usuarios administradores: ${error.message}`);
-                console.log("Usuarios administradores encontrados:", data?.length || 0, "Datos:", data);
-                if (!data || data.length === 0) {
-                    console.log("No se encontraron administradores, intentando crear uno...");
-                    const { error: insertError } = await supabase.from('users').insert([{ name: "Admin", pin: "0000", role: "manager", auth_id: session.session.user.id }]);
-                    if (insertError) throw new Error(`Error al crear usuario administrador: ${insertError.message}`);
-                    console.log("Usuario administrador creado exitosamente.");
+                console.log("🚀 Iniciando setupInitialData...");
+                
+                // Verificar si ya existe un administrador
+                const { data: existingAdmins, error: adminError } = await supabase
+                    .from('users')
+                    .select('id, role')
+                    .eq('role', 'manager')
+                    .limit(1);
+                
+                if (adminError) {
+                    console.error("❌ Error al verificar usuarios administradores:", adminError);
+                    throw new Error(`Error al verificar usuarios administradores: ${adminError.message}`);
+                }
+                
+                // Si no existe ningún administrador, crear uno
+                if (!existingAdmins || existingAdmins.length === 0) {
+                    console.log("🔍 No se encontraron administradores, intentando crear uno...");
+                    
+                    const { data: { session } } = await supabase.auth.getSession();
+                    
+                    // Verificar si hay una sesión activa
+                    if (session && session.user) {
+                        const { error: insertError } = await supabase.from('users').insert({
+                            name: "Admin",
+                            email: session.user.email || 'admin@ejemplo.com',
+                            pin: "0000", 
+                            role: "manager", 
+                            auth_id: session.user.id,
+                            company_id: null  // Asegúrate de manejar esto según tu lógica de negocio
+                        });
+                        
+                        if (insertError) {
+                            console.error("❌ Error al crear usuario administrador:", insertError);
+                            throw new Error(`Error al crear usuario administrador: ${insertError.message}`);
+                        }
+                        
+                        console.log("✅ Usuario administrador creado exitosamente.");
+                    } else {
+                        // Si no hay sesión, intentar crear una
+                        try {
+                            const { data: authData, error: authError } = await supabase.auth.signUp({
+                                email: 'admin@ejemplo.com',
+                                password: 'AdminPassword123!' // Asegúrate de usar una contraseña segura
+                            });
+
+                            if (authError) {
+                                console.error("❌ Error al crear usuario de autenticación:", authError);
+                                throw authError;
+                            }
+
+                            // Insertar usuario con el nuevo ID de autenticación
+                            const { error: insertError } = await supabase.from('users').insert({
+                                name: "Admin",
+                                email: 'admin@ejemplo.com',
+                                pin: "0000", 
+                                role: "manager", 
+                                auth_id: authData.user.id,
+                                company_id: null
+                            });
+
+                            if (insertError) {
+                                console.error("❌ Error al crear usuario administrador:", insertError);
+                                throw insertError;
+                            }
+
+                            console.log("✅ Usuario administrador creado exitosamente con nueva autenticación.");
+                        } catch (signUpError) {
+                            console.error("❌ Error completo en signup:", signUpError);
+                            throw signUpError;
+                        }
+                    }
                 }
             } catch (err) {
-                console.error("Error en setupInitialData:", err);
+                console.error("❌ Error global en setupInitialData:", err);
                 throw err;
             }
         };
 
         const loadCompanyLogoForLogin = async () => {
-            try {
-                console.log("Cargando logo de la empresa...");
+             try {
                 const { data, error } = await supabase.from('company_details').select('logo').limit(1).single();
-                if (error) {
-                    console.error("Error cargando logo:", error);
+                if (error && error.code !== 'PGRST116') { // Ignora el error si la tabla está vacía
+                    console.warn("No se pudo cargar el logo:", error.message);
                     return;
                 }
                 if (data && data.logo) {
                     document.getElementById('login-logo').src = data.logo;
-                    console.log("Logo cargado exitosamente.");
                 }
             } catch (err) {
                 console.error("Error inesperado en loadCompanyLogoForLogin:", err);
@@ -406,29 +462,28 @@
             const loginError = document.getElementById('login-error');
             loginError.textContent = '';
             const email = document.getElementById('email-input').value.trim();
-            if (!email || currentPin.length !== 4) { 
+            const password = document.getElementById('pin-input').value;
+
+            if (!email || password.length !== 4) { 
                 loginError.textContent = 'Introduce un correo válido y un PIN de 4 dígitos.'; 
                 return; 
             }
             try {
-                console.log("Intentando login con email:", email, "y PIN:", currentPin);
-                const { data, error } = await supabase.auth.signInWithPassword({ email, password: currentPin });
+                // Para el login, la contraseña es el PIN
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                
                 if (error) {
-                    console.error("Error en login:", error);
-                    loginError.textContent = `Error: ${error.message}`;
-                    clearPin();
-                    return;
+                    throw new Error(error.message);
                 }
-                const { user } = data;
-                const { data: userData, error: userError } = await supabase.from('users').select('*').eq('auth_id', user.id).single();
-                if (userError || !userData) {
-                    console.error("Error al obtener datos del usuario:", userError);
-                    loginError.textContent = 'Usuario no encontrado en la base de datos.';
-                    clearPin();
-                    await supabase.auth.signOut();
-                    return;
-                }
-                console.log("Usuario autenticado:", userData);
+                
+                const { data: userData, error: userError } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('auth_id', data.user.id)
+                    .single();
+
+                if (userError) throw new Error("El usuario de autenticación no existe en la tabla de usuarios.");
+
                 currentUser = userData;
                 if (currentUser.role === 'manager') { 
                     showView('manager'); 
@@ -438,8 +493,8 @@
                     await loadEmployeeView(); 
                 }
             } catch (err) {
-                console.error("Error inesperado en login:", err);
-                loginError.textContent = 'Error inesperado al iniciar sesión. Intenta de nuevo.';
+                console.error("Error en login:", err);
+                loginError.textContent = 'Correo o PIN incorrecto. Intenta de nuevo.';
                 clearPin();
             }
         };
@@ -478,20 +533,14 @@
                     const [year, month] = monthYear.split('-').map(Number);
                     const startDate = new Date(year, month - 1, 1).toISOString();
                     const endDate = new Date(year, month, 1).toISOString();
-                    console.log(`Cargando turnos para userId: ${userId}, mes: ${monthYear}`);
                     const { data, error } = await supabase
                         .from('shifts')
                         .select('*')
                         .eq('user_id', userId)
                         .gte('start_time', startDate)
                         .lt('start_time', endDate);
-                    if (error) {
-                        console.error("Error fetching shifts:", error);
-                        document.getElementById('clock-status').textContent = `Error al cargar turnos: ${error.message}`;
-                        document.getElementById('clock-status').classList.add('text-red-500');
-                        return;
-                    }
-                    console.log("Turnos cargados:", data);
+                    if (error) throw error;
+                    
                     data.sort((a, b) => new Date(b.start_time) - new Date(a.start_time));
                     if (viewType === 'employee') {
                         updateEmployeeShiftsUI(data);
@@ -499,9 +548,10 @@
                         updateManagerShiftsUI(data);
                     }
                 } catch (err) {
-                    console.error("Error inesperado en fetchAndRender:", err);
-                    document.getElementById('clock-status').textContent = 'Error inesperado al cargar turnos.';
-                    document.getElementById('clock-status').classList.add('text-red-500');
+                    console.error("Error fetching shifts:", err);
+                    const statusEl = viewType === 'employee' ? document.getElementById('clock-status') : document.getElementById('manager-total-hours');
+                    statusEl.textContent = `Error al cargar turnos: ${err.message}`;
+                    statusEl.classList.add('text-red-500');
                 }
             };
 
@@ -509,22 +559,12 @@
 
             shiftsSubscription = supabase
                 .channel(`public:shifts:user_id=eq.${userId}`)
-                .on(
-                    'postgres_changes',
-                    {
-                        event: '*',
-                        schema: 'public',
-                        table: 'shifts',
-                        filter: `user_id=eq.${userId}`,
-                    },
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'shifts', filter: `user_id=eq.${userId}`}, 
                     (payload) => {
                         console.log("Cambio detectado en turnos:", payload);
                         fetchAndRender();
                     }
-                )
-                .subscribe((status) => {
-                    console.log("Estado de suscripción:", status);
-                });
+                ).subscribe();
         };
 
         const updateEmployeeShiftsUI = (shifts) => {
@@ -551,7 +591,7 @@
                 const end = shift.end_time ? new Date(shift.end_time) : null;
                 const totalHours = end ? ((end - start) / 3600000).toFixed(2) : 'En curso';
                 const statusMap = { completed: '<span class="text-green-600">Aprobado</span>', pending_approval: '<span class="text-yellow-600">Pendiente</span>', in_progress: '<span class="text-blue-600">En curso</span>' };
-                const editButton = shift.status !== 'in-progress' ? `<button data-action="show-shift-form" data-shift-id="${shift.id}" class="text-blue-600 hover:text-blue-800"><i class="fas fa-edit"></i> Editar</button>` : '';
+                const editButton = shift.status !== 'in-progress' ? `<button data-action="show-shift-form" data-shift-id="${shift.id}" class="text-blue-600 hover:text-blue-800"><i class="fas fa-edit"></i></button>` : '';
                 return `<tr class="${shift.status === 'pending_approval' ? 'pending-approval' : ''} border-b last:border-b-0"><td class="p-2">${start.toLocaleDateString('es-ES')}</td><td class="p-2">${start.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</td><td class="p-2">${end ? end.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) : '-'}</td><td class="p-2">${totalHours}</td><td class="p-2">${statusMap[shift.status] || ''}</td><td class="p-2 text-right">${editButton}</td></tr>`;
             }).join('');
             tableBody.innerHTML = rows;
@@ -569,25 +609,16 @@
         const clockIn = async () => {
             if (!activeShiftId) {
                 try {
-                    console.log("Iniciando turno para userId:", currentUser.id);
                     const { data, error } = await supabase
                         .from('shifts')
                         .insert([{ user_id: currentUser.id, start_time: new Date().toISOString(), status: 'in-progress' }])
-                        .select();
-                    if (error) {
-                        console.error("Error en clockIn:", error);
-                        document.getElementById('clock-status').textContent = `Error al iniciar turno: ${error.message}`;
-                        document.getElementById('clock-status').classList.add('text-red-500');
-                        return;
-                    }
-                    console.log("Turno iniciado:", data);
-                    activeShiftId = data[0].id;
+                        .select()
+                        .single();
+                    if (error) throw error;
+                    activeShiftId = data.id;
                     updateClockButtons();
-                    const monthYear = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-                    listenForShifts(currentUser.id, monthYear, 'employee');
                 } catch (err) {
-                    console.error("Error inesperado en clockIn:", err);
-                    document.getElementById('clock-status').textContent = 'Error inesperado al iniciar turno.';
+                    document.getElementById('clock-status').textContent = `Error al iniciar turno: ${err.message}`;
                     document.getElementById('clock-status').classList.add('text-red-500');
                 }
             }
@@ -596,25 +627,15 @@
         const clockOut = async () => {
             if (activeShiftId) {
                 try {
-                    console.log("Finalizando turno con ID:", activeShiftId);
                     const { error } = await supabase
                         .from('shifts')
                         .update({ end_time: new Date().toISOString(), status: 'completed' })
                         .eq('id', activeShiftId);
-                    if (error) {
-                        console.error("Error en clockOut:", error);
-                        document.getElementById('clock-status').textContent = `Error al finalizar turno: ${error.message}`;
-                        document.getElementById('clock-status').classList.add('text-red-500');
-                        return;
-                    }
-                    console.log("Turno finalizado exitosamente.");
+                    if (error) throw error;
                     activeShiftId = null;
                     updateClockButtons();
-                    const monthYear = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-                    listenForShifts(currentUser.id, monthYear, 'employee');
                 } catch (err) {
-                    console.error("Error inesperado en clockOut:", err);
-                    document.getElementById('clock-status').textContent = 'Error inesperado al finalizar turno.';
+                    document.getElementById('clock-status').textContent = `Error al finalizar turno: ${err.message}`;
                     document.getElementById('clock-status').classList.add('text-red-500');
                 }
             }
@@ -623,7 +644,7 @@
         const updateSignatureButtonState = async (userId, monthYear) => {
             const approveBtn = document.getElementById('approve-hours-btn'), signedMsg = document.getElementById('signed-message');
             approveBtn.classList.add('hidden'); signedMsg.classList.add('hidden');
-            const { data } = await supabase.from('signatures').select('id').eq('user_id', userId).eq('month_year', monthYear).single();
+            const { data } = await supabase.from('signatures').select('id').eq('user_id', userId).eq('month_year', monthYear).maybeSingle();
             if (data) { signedMsg.classList.remove('hidden'); return; }
             const today = new Date(), [year, month] = monthYear.split('-').map(Number);
             if (today >= new Date(year, month, 0)) approveBtn.classList.remove('hidden');
@@ -649,7 +670,6 @@
             const { error } = await supabase.from('signatures').insert([{ user_id: currentUser.id, month_year: monthYear, signature_data: signaturePad.toDataURL(), signed_at: now.toISOString() }]);
             if (!error) { hideSignaturePad(); updateSignatureButtonState(currentUser.id, monthYear); }
             else {
-                console.error("Error al guardar firma:", error);
                 signatureError.textContent = `Error al guardar: ${error.message}`;
             }
         };
@@ -657,8 +677,7 @@
         const showShiftForm = async (shiftId = null) => {
             editingShiftId = shiftId;
             document.getElementById('shift-form-container').classList.remove('hidden');
-            const form = document.getElementById('shift-form');
-            form.reset();
+            document.getElementById('shift-form').reset();
             document.getElementById('shift-modal-error').textContent = '';
             document.getElementById('shift-form-title').textContent = editingShiftId ? 'Editar Fichaje' : 'Añadir Fichaje Olvidado';
             const today = new Date().toISOString().split('T')[0];
@@ -688,7 +707,7 @@
             if (endDateTime <= startDateTime) { modalError.textContent = 'La hora de salida debe ser posterior a la de entrada.'; return; }
             const shiftData = { user_id: currentUser.id, start_time: startDateTime.toISOString(), end_time: endDateTime.toISOString(), status: 'pending_approval' };
             const { error } = editingShiftId ? await supabase.from('shifts').update(shiftData).eq('id', editingShiftId) : await supabase.from('shifts').insert(shiftData);
-            if (!error) hideShiftForm(); else { console.error("Error al guardar turno:", error); modalError.textContent = `Error al guardar: ${error.message}`; }
+            if (!error) hideShiftForm(); else { modalError.textContent = `Error al guardar: ${error.message}`; }
         };
 
         const loadManagerView = async () => {
@@ -717,19 +736,18 @@
             const tableBody = table.querySelector('tbody');
             const headers = `<thead><tr class="border-b"><th class="p-2">Fecha</th><th class="p-2">Entrada</th><th class="p-2">Salida</th><th class="p-2">Total Horas</th><th class="p-2">Acciones</th></tr></thead>`;
             let totalMinutes = 0;
-            if (shifts.length === 0) { tableBody.innerHTML = '<tr><td colspan="5" class="p-2 text-center text-slate-500">No hay registros.</td></tr>'; table.querySelector('thead').innerHTML = headers; return; }
+            if (shifts.length === 0) { tableBody.innerHTML = '<tr><td colspan="5" class="p-2 text-center text-slate-500">No hay registros.</td></tr>'; table.querySelector('thead').innerHTML = headers; document.getElementById('manager-total-hours').textContent = '0.00'; return; }
             const rows = shifts.map(shift => {
                 const start = new Date(shift.start_time), end = shift.end_time ? new Date(shift.end_time) : null;
                 const totalHours = end ? ((end - start) / 3600000).toFixed(2) : 'En curso';
                 const actions = `
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 items-center">
                         ${shift.status === 'pending_approval' ? `
-                            <button data-action="approve-shift" data-shift-id="${shift.id}" class="btn btn-success btn-sm"><i class="fas fa-check"></i> Aprobar</button>
-                            <button data-action="reject-shift" data-shift-id="${shift.id}" class="btn btn-danger btn-sm"><i class="fas fa-times"></i> Rechazar</button>
+                            <button title="Aprobar" data-action="approve-shift" data-shift-id="${shift.id}" class="text-green-600 hover:text-green-800"><i class="fas fa-check-circle"></i></button>
+                            <button title="Rechazar" data-action="reject-shift" data-shift-id="${shift.id}" class="text-orange-600 hover:text-orange-800"><i class="fas fa-times-circle"></i></button>
                         ` : ''}
-                        <button data-action="delete-shift" data-shift-id="${shift.id}" class="btn btn-danger btn-sm"><i class="fas fa-trash"></i></button>
-                    </div>
-                `;
+                        <button title="Eliminar" data-action="delete-shift" data-shift-id="${shift.id}" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                    </div>`;
                 if (shift.status === 'completed' && shift.end_time) totalMinutes += (end - start) / 60000;
                 return `<tr class="${shift.status === 'pending_approval' ? 'pending-approval' : ''} border-b last:border-b-0"><td class="p-2">${start.toLocaleDateString('es-ES')}</td><td class="p-2">${start.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})}</td><td class="p-2">${end ? end.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}) : '-'}</td><td class="p-2">${totalHours}</td><td class="p-2">${actions}</td></tr>`;
             }).join('');
@@ -740,65 +758,68 @@
 
         const updateManagerSignatureDisplay = async (userId, monthYear) => {
             const display = document.getElementById('manager-signature-display');
-            const { data } = await supabase.from('signatures').select('*').eq('user_id', userId).eq('month_year', monthYear).single();
+            const { data } = await supabase.from('signatures').select('*').eq('user_id', userId).eq('month_year', monthYear).maybeSingle();
             if (data) {
-                display.innerHTML = `
-                    <div class="flex items-center gap-4">
-                        <img src="${data.signature_data}" class="w-48 h-24 border rounded-md p-1 bg-white">
-                        <div>
-                            <p class="font-semibold text-green-600">Resumen de horas firmado por el empleado.</p>
-                            <p class="text-sm text-slate-500">Fecha de firma: ${new Date(data.signed_at).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' })}</p>
-                        </div>
-                    </div>
-                `;
+                display.innerHTML = `<h4 class="font-semibold">Firma del Empleado</h4><img src="${data.signature_data}" alt="Firma" class="mt-2 border rounded-md bg-white"/><p class="text-sm text-slate-500 mt-1">Firmado el: ${new Date(data.signed_at).toLocaleString('es-ES')}</p>`;
             } else {
-                display.innerHTML = '<p class="text-slate-500">El resumen de horas para este mes aún no ha sido firmado.</p>';
+                display.innerHTML = '<p class="text-slate-500">Este parte de horas aún no ha sido firmado.</p>';
             }
         };
 
-        const approveShift = async (shiftId) => {
-            if (!confirm('¿Estás seguro de que quieres aprobar este fichaje?')) return;
-            const { error } = await supabase.from('shifts').update({ status: 'completed' }).eq('id', shiftId);
-            if (error) console.error("Error al aprobar fichaje:", error);
-            else console.log("Fichaje aprobado exitosamente.");
-        };
-        const rejectShift = async (shiftId) => {
-            if (!confirm('¿Estás seguro de que quieres rechazar este fichaje?')) return;
-            const { error } = await supabase.from('shifts').delete().eq('id', shiftId);
-            if (error) console.error("Error al rechazar fichaje:", error);
-            else console.log("Fichaje rechazado y eliminado exitosamente.");
-        };
-        const deleteShift = async (shiftId) => {
-            if (!confirm('¿Estás seguro de que quieres eliminar este fichaje?')) return;
-            const { error } = await supabase.from('shifts').delete().eq('id', shiftId);
-            if (error) console.error("Error al eliminar fichaje:", error);
-            else console.log("Fichaje eliminado exitosamente.");
-        };
+        const approveShift = async (shiftId) => { await supabase.from('shifts').update({ status: 'completed' }).eq('id', shiftId); };
+        const rejectShift = async (shiftId) => { if (confirm('¿Rechazar y eliminar este fichaje?')) await supabase.from('shifts').delete().eq('id', shiftId); };
+        const deleteShift = async (shiftId) => { if (confirm('¿Eliminar este fichaje permanentemente?')) await supabase.from('shifts').delete().eq('id', shiftId); };
 
         const populateEmployeeDropdown = async () => {
             const employeeSelect = document.getElementById('employee-select');
             const { data, error } = await supabase.from('users').select('id, name, role').order('name');
             if (error) { console.error("Error al cargar empleados:", error); return; }
-            const options = data.map(user => `<option value="${user.auth_id}">${user.name}${user.role === 'manager' ? ' (Admin)' : ''}</option>`).join('');
-            employeeSelect.innerHTML = `<option value="">Selecciona un empleado...</option>` + options;
-            if (data.length > 0) employeeSelect.value = data[0].auth_id;
+            employeeSelect.innerHTML = data.map(user => `<option value="${user.id}">${user.name}${user.role === 'manager' ? ' (Admin)' : ''}</option>`).join('');
+            updateManagerShiftView();
         };
 
         const listenForEmployees = async () => {
             if (usersSubscription) await supabase.removeChannel(usersSubscription);
             usersSubscription = supabase.channel('public:users').on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, (payload) => {
-                console.log("Cambio detectado en usuarios:", payload);
                 populateEmployeeDropdown();
+                renderEmployeeList();
             }).subscribe();
+            renderEmployeeList(); // Carga inicial
         };
         
+        const renderEmployeeList = async () => {
+            const employeeListDiv = document.getElementById('employee-list');
+            const { data, error } = await supabase.from('users').select('*').order('name');
+            if(error) { employeeListDiv.innerHTML = `<p class="text-red-500">Error al cargar la lista de empleados.</p>`; return; }
+            if(!data.length) { employeeListDiv.innerHTML = `<p class="text-slate-500">No hay empleados registrados.</p>`; return; }
+            employeeListDiv.innerHTML = data.map(employee => `
+                <div class="bg-slate-50 p-3 rounded-lg flex justify-between items-center">
+                    <div><p class="font-semibold">${employee.name}</p><p class="text-sm text-slate-500">PIN: ${employee.pin} | Rol: ${employee.role === 'manager' ? 'Admin' : 'Empleado'}</p></div>
+                    <div class="flex items-center space-x-2">
+                        <button data-action="show-employee-form" data-user-id="${employee.id}" class="text-blue-600 hover:text-blue-800"><i class="fas fa-edit"></i></button>
+                        <button data-action="delete-employee" data-user-id="${employee.id}" class="text-red-600 hover:text-red-800"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        };
+        
+        const deleteEmployee = async (userId) => {
+            if (!confirm('¿Seguro que quieres eliminar este empleado? Esta acción no se puede deshacer.')) return;
+            // Primero, necesitas eliminar al usuario de Supabase Auth. Esto requiere privilegios de administrador.
+            // Esta operación debe realizarse desde un entorno seguro (backend) usando la service_role_key.
+            // Desde el cliente, solo podemos eliminar el registro de la tabla 'users'.
+            console.warn("Eliminando solo el registro de la tabla 'users'. La cuenta de autenticación permanecerá.");
+            const { error } = await supabase.from('users').delete().eq('id', userId);
+            if(error) alert(`Error al eliminar empleado: ${error.message}`);
+        };
+
         const showEmployeeForm = async (userId = null) => {
             document.getElementById('form-title').textContent = userId ? 'Editar Empleado' : 'Añadir Nuevo Empleado';
             document.getElementById('editing-user-id').value = userId || '';
             document.getElementById('employee-form-container').classList.remove('hidden');
             document.getElementById('employee-form').reset();
             if (userId) {
-                const { data } = await supabase.from('users').select('*').eq('auth_id', userId).single();
+                const { data } = await supabase.from('users').select('*').eq('id', userId).single();
                 if (data) {
                     document.getElementById('employee-name-input').value = data.name;
                     document.getElementById('employee-email-input').value = data.email || '';
@@ -822,28 +843,29 @@
             modalError.textContent = '';
             
             if (pin.length !== 4) { modalError.textContent = "El PIN debe tener 4 dígitos."; return; }
-
-            const userData = { name, email, pin, role, auth_id: id || null };
-
+            
             try {
-                if (id) {
-                    const { error } = await supabase.from('users').update(userData).eq('auth_id', id);
+                if (id) { // Editando
+                    const { error } = await supabase.from('users').update({ name, email, pin, role }).eq('id', id);
                     if (error) throw error;
-                } else {
-                    const { error } = await supabase.from('users').insert(userData);
-                    if (error) throw error;
+                } else { // Creando
+                    // 1. Crear usuario en Auth
+                    const { data: authData, error: authError } = await supabase.auth.signUp({ email, password: pin });
+                    if (authError) throw authError;
+                    
+                    // 2. Insertar en tabla 'users'
+                    const { error: dbError } = await supabase.from('users').insert({ id: authData.user.id, auth_id: authData.user.id, name, email, pin, role });
+                    if(dbError) throw dbError;
                 }
                 hideEmployeeForm();
-                await populateEmployeeDropdown();
             } catch (err) {
-                console.error("Error al guardar empleado:", err);
                 modalError.textContent = `Error: ${err.message}`;
             }
         };
 
         const loadCompanySettings = async () => {
-            const { data, error } = await supabase.from('company_details').select('*').limit(1).single();
-            if (error && error.code !== 'PGRST116') { console.error("Error al cargar detalles de la empresa:", error); return; }
+            const { data, error } = await supabase.from('company_details').select('*').limit(1).maybeSingle();
+            if (error) { console.error("Error al cargar detalles de la empresa:", error); return; }
             if (data) {
                 document.getElementById('company-name').value = data.name || '';
                 document.getElementById('company-cif').value = data.cif || '';
@@ -858,8 +880,11 @@
             const cif = document.getElementById('company-cif').value;
             const address = document.getElementById('company-address').value;
             const { error } = await supabase.from('company_details').upsert({ id: 1, name, cif, address });
-            if (!error) document.getElementById('company-details-success').classList.remove('hidden');
-            else console.error("Error al guardar detalles de la empresa:", error);
+            const successMsg = document.getElementById('company-details-success');
+            if (!error) { 
+                successMsg.classList.remove('hidden');
+                setTimeout(() => successMsg.classList.add('hidden'), 3000);
+            }
         };
 
         const handleLogoUpload = (event) => {
@@ -877,64 +902,101 @@
         const saveLogo = async () => {
             if (!tempLogoData) return;
             const fileName = `logo_${Date.now()}.${tempLogoData.name.split('.').pop()}`;
-            const { data, error } = await supabase.storage.from('company_logos').upload(fileName, tempLogoData, { upsert: true });
-            if (error) {
-                console.error("Error al subir logo:", error);
-                document.getElementById('logo-save-error').textContent = `Error: ${error.message}`;
-                document.getElementById('logo-save-error').classList.remove('hidden');
-                return;
-            }
+            const { error } = await supabase.storage.from('company_logos').upload(fileName, tempLogoData, { upsert: true });
+            if (error) { document.getElementById('logo-save-error').textContent = `Error: ${error.message}`; return; }
+            
             const { data: urlData } = supabase.storage.from('company_logos').getPublicUrl(fileName);
             const { error: dbError } = await supabase.from('company_details').upsert({ id: 1, logo: urlData.publicUrl });
+            const successMsg = document.getElementById('logo-save-success');
             if (!dbError) {
-                document.getElementById('logo-save-success').classList.remove('hidden');
-                document.getElementById('logo-save-error').classList.add('hidden');
-                document.getElementById('save-logo-btn').classList.add('hidden');
-            } else {
-                console.error("Error al guardar URL del logo:", dbError);
-                document.getElementById('logo-save-error').textContent = `Error: ${dbError.message}`;
-                document.getElementById('logo-save-error').classList.remove('hidden');
+                successMsg.classList.remove('hidden');
+                setTimeout(() => successMsg.classList.add('hidden'), 3000);
             }
         };
 
+        const generatePDF = async () => {
+            const employeeId = document.getElementById('employee-select').value;
+            if(!employeeId) { alert("Por favor, selecciona un empleado."); return; }
+            const monthYear = document.getElementById('month-select').value;
+            const { data: shifts, error: shiftsError } = await supabase.from('shifts').select('*').eq('user_id', employeeId)
+                .gte('start_time', `${monthYear}-01T00:00:00Z`).lt('start_time', `${monthYear}-32T00:00:00Z`); // Simple date filter
+            
+            const { data: user, error: userError } = await supabase.from('users').select('*').eq('id', employeeId).single();
+            const { data: company, error: companyError } = await supabase.from('company_details').select('*').single();
+
+            if (shiftsError || userError || companyError) { alert("Error al obtener datos para el PDF."); return; }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(18);
+            doc.text(`Informe de Horas - ${user.name}`, 14, 22);
+            doc.setFontSize(12);
+            doc.text(`Mes: ${document.getElementById('manager-month-display').textContent}`, 14, 30);
+            doc.text(`Empresa: ${company.name || ''}`, 14, 36);
+            doc.text(`CIF: ${company.cif || ''}`, 14, 42);
+
+            const tableColumn = ["Fecha", "Entrada", "Salida", "Total Horas"];
+            const tableRows = [];
+            let totalMinutes = 0;
+
+            shifts.forEach(shift => {
+                const start = new Date(shift.start_time);
+                const end = new Date(shift.end_time);
+                const hours = ((end - start) / 3600000).toFixed(2);
+                if(shift.status === 'completed') totalMinutes += (end - start) / 60000;
+                const shiftData = [
+                    start.toLocaleDateString('es-ES'),
+                    start.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}),
+                    end.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}),
+                    hours
+                ];
+                tableRows.push(shiftData);
+            });
+
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 50,
+            });
+
+            const finalY = doc.lastAutoTable.finalY;
+            doc.setFontSize(14);
+            doc.text(`Total Horas Aprobadas: ${(totalMinutes / 60).toFixed(2)}`, 14, finalY + 10);
+            
+            const { data: signature } = await supabase.from('signatures').select('signature_data').eq('user_id', employeeId).eq('month_year', monthYear).single();
+            if(signature) {
+                doc.text("Firma del Empleado:", 14, finalY + 20);
+                doc.addImage(signature.signature_data, 'PNG', 14, finalY + 25, 60, 30);
+            }
+
+            doc.save(`informe_horas_${user.name}_${monthYear}.pdf`);
+        };
+
+
         const setupEventListeners = () => {
-            document.addEventListener('click', async (e) => {
-                const action = e.target.closest('[data-action]')?.dataset.action;
-                const value = e.target.closest('[data-action]')?.dataset.value;
-                const shiftId = e.target.closest('[data-shift-id]')?.dataset.shiftId;
-                const tab = e.target.closest('[data-tab]')?.dataset.tab;
+            document.body.addEventListener('click', async (e) => {
+                const target = e.target.closest('[data-action]');
+                if (!target) return;
+                const action = target.dataset.action;
+                const value = target.dataset.value;
+                const shiftId = target.dataset.shiftId;
+                const tab = target.dataset.tab;
+                const userId = target.dataset.userId;
 
-                if (!action) return;
-
-                switch (action) {
-                    case 'enter-pin': enterPin(value); break;
-                    case 'clear-pin': clearPin(); break;
-                    case 'login': await login(); break;
-                    case 'logout': await logout(); break;
-                    case 'clock-in': await clockIn(); break;
-                    case 'clock-out': await clockOut(); break;
-                    case 'show-shift-form': await showShiftForm(shiftId); break;
-                    case 'hide-shift-form': hideShiftForm(); break;
-                    case 'open-signature-modal': openSignatureModal(); break;
-                    case 'clear-signature': clearSignature(); break;
-                    case 'cancel-signature': hideSignaturePad(); break;
-                    case 'save-signature': await saveSignature(); break;
-                    case 'switch-tab': switchTab(tab); break;
-                    case 'generate-pdf': console.log("Generar PDF..."); break;
-                    case 'approve-shift': await approveShift(shiftId); break;
-                    case 'reject-shift': await rejectShift(shiftId); break;
-                    case 'delete-shift': await deleteShift(shiftId); break;
-                    case 'show-employee-form': await showEmployeeForm(); break;
-                    case 'hide-employee-form': hideEmployeeForm(); break;
-                    case 'save-logo': await saveLogo(); break;
-                }
+                const actions = {
+                    'enter-pin': () => enterPin(value), 'clear-pin': clearPin, 'login': login, 'logout': logout,
+                    'clock-in': clockIn, 'clock-out': clockOut, 'show-shift-form': () => showShiftForm(shiftId),
+                    'hide-shift-form': hideShiftForm, 'open-signature-modal': openSignatureModal,
+                    'clear-signature': clearSignature, 'cancel-signature': hideSignaturePad, 'save-signature': saveSignature,
+                    'switch-tab': () => switchTab(tab), 'generate-pdf': generatePDF, 'show-employee-form': () => showEmployeeForm(userId),
+                    'hide-employee-form': hideEmployeeForm, 'approve-shift': () => approveShift(shiftId), 'reject-shift': () => rejectShift(shiftId),
+                    'delete-shift': () => deleteShift(shiftId), 'save-logo': saveLogo, 'delete-employee': () => deleteEmployee(userId)
+                };
+                if (actions[action]) await actions[action]();
             });
 
-            document.getElementById('shift-form').addEventListener('submit', (e) => {
-                e.preventDefault();
-                saveShift();
-            });
-
+            document.getElementById('shift-form').addEventListener('submit', (e) => { e.preventDefault(); saveShift(); });
             document.getElementById('employee-form').addEventListener('submit', saveEmployee);
             document.getElementById('company-details-form').addEventListener('submit', saveCompanyDetails);
             document.getElementById('logo-upload').addEventListener('change', handleLogoUpload);
@@ -947,42 +1009,92 @@
         const init = async () => {
             showView('loading');
             try {
+                console.log("🔄 Iniciando proceso de inicialización...");
+                
                 await testSupabaseConnection();
+                
+                console.log("📦 Configurando datos iniciales...");
                 await setupInitialData();
+                
+                console.log("🖼️ Cargando logo de la empresa...");
                 await loadCompanyLogoForLogin();
+                
                 const { data: { session } } = await supabase.auth.getSession();
+                
                 if (session) {
-                    const { data: userData } = await supabase.from('users').select('*').eq('auth_id', session.user.id).single();
+                    console.log("👤 Sesión detectada. Buscando datos de usuario...");
+                    
+                    const { data: userData, error } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('auth_id', session.user.id)
+                        .single();
+                    
+                    if (error) {
+                        console.error("❌ Error al buscar usuario:", error);
+                        await supabase.auth.signOut();
+                        showView('login');
+                        return;
+                    }
+                    
                     if (userData) {
+                        console.log("✅ Usuario encontrado. Rol:", userData.role);
+                        
                         currentUser = userData;
+                        
                         if (currentUser.role === 'manager') {
+                            console.log("🏢 Cargando vista de manager...");
                             showView('manager');
                             await loadManagerView();
                         } else {
+                            console.log("👥 Cargando vista de empleado...");
                             showView('employee');
                             await loadEmployeeView();
                         }
                     } else {
+                        console.warn("❓ No se encontraron datos de usuario. Cerrando sesión.");
                         await supabase.auth.signOut();
                         showView('login');
                     }
                 } else {
+                    console.log("🚪 No hay sesión activa. Mostrando login.");
                     showView('login');
                 }
+                
+                console.log("🎉 Inicialización completada.");
+                setupEventListeners();
+                
             } catch (err) {
-                console.error("Fallo de inicialización:", err);
+                console.error("❌ Fallo de inicialización:", err);
                 document.getElementById('loading-message').textContent = 'Error al cargar la aplicación. Por favor, revisa la consola para más detalles.';
                 document.getElementById('loading-message').classList.add('text-red-500');
+                
+                // Opcional: Mostrar un modal o mensaje de error más descriptivo
+                showErrorModal('Error de Inicialización', err.message);
             }
-            setupEventListeners();
         };
+
+        // Función opcional para mostrar modal de error
+        function showErrorModal(title, message) {
+            const modal = document.createElement('div');
+            modal.innerHTML = `
+                <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
+                        <h2 class="text-xl font-bold mb-4 text-red-600">${title}</h2>
+                        <p class="mb-4 text-slate-700">${message}</p>
+                        <div class="text-right">
+                           <button onclick="this.closest('.fixed').remove()" class="btn btn-primary">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
 
         init();
     </script>
 </body>
 </html>
-
-
 
 
 
