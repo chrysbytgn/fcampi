@@ -221,17 +221,6 @@
                     <div id="signed-message" class="hidden text-green-600 font-semibold flex items-center gap-2"><i class="fas fa-check-circle"></i> Resumen Firmado</div>
                 </div>
             </div>
-            <div id="signature-container" class="hidden bg-slate-50 p-4 rounded-lg mt-4">
-                <h3 class="text-lg font-bold mb-4">Firmar Resumen de Horas</h3>
-                <p class="text-slate-600 mb-4">Al firmar, confirmas que los datos son correctos.</p>
-                <canvas id="signature-canvas" class="signature-canvas w-full h-48 bg-white"></canvas>
-                <p id="signature-error" class="text-red-500 text-sm mt-2 h-4 text-right"></p>
-                <div class="mt-6 flex justify-end gap-3">
-                    <button type="button" data-action="clear-signature" class="btn btn-secondary btn-icon-text"><i class="fas fa-eraser"></i> Limpiar</button>
-                    <button type="button" data-action="cancel-signature" class="btn btn-secondary btn-icon-text"><i class="fas fa-times"></i> Cancelar</button>
-                    <button type="button" data-action="save-signature" class="btn btn-primary btn-icon-text"><i class="fas fa-save"></i> Guardar Firma</button>
-                </div>
-            </div>
         </div>
         <div id="manager-view" class="bg-white p-8 rounded-xl shadow-lg">
             <div class="flex justify-between items-center mb-6">
@@ -317,7 +306,7 @@
     </div>
     <script type="module">
         const SUPABASE_URL = 'https://thzalqqhxlqpnaswzraw.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoemFscXFoeGxxcG5hc3d6cmF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4ODg2MjcsImV4cCI6MjA3MTQyN30.tworaVCWL7suWJqtbR7mIXEivdZaM3lBVtgJLgwRvYc';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoemFscXFoeGxxcG5hc3d6cmF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4ODg2MjcsImV4cCI6MjA3MTQ2NDYyN30.tworaVCWL7suWJqtbR7mIXEivdZaM3lBVtgJLgwRvYc';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const views = { loading: document.getElementById('loading-view'), login: document.getElementById('login-view'), employee: document.getElementById('employee-view'), manager: document.getElementById('manager-view') };
@@ -327,8 +316,7 @@
         const showView = (viewName) => { Object.values(views).forEach(v => v.style.display = 'none'); views[viewName].style.display = 'block'; };
         const updatePinDisplay = () => { document.getElementById('pin-display').textContent = '*'.repeat(currentPin.length); };
         
-        // --- INICIO DE LA MODIFICACIÓN ---
-
+        // Función para inicializar el sistema
         const initializeSystem = async () => {
             try {
                 console.log("🚀 Iniciando inicialización del sistema...");
@@ -351,7 +339,8 @@
             }
         };
 
-        const authenticateWithPin = async (pin) => {
+        // Función de autenticación con PIN mejorada
+        const authenticateWithPin = async (pin) => { // Elimino la sintaxis de TypeScript
             try {
                 // Primero, intentar asegurar que exista un administrador
                 const ensureAdminResult = await supabase.rpc('ensure_admin_exists');
@@ -369,17 +358,24 @@
                     throw error;
                 }
                 
+                // --- INICIO DEL CÓDIGO CORREGIDO ---
                 if (!data.success) {
-                    // Mostrar mensaje de error específico
-                    throw new Error(data.message || 'Autenticación fallida');
+                  throw new Error(data.message || 'PIN incorrecto');
                 }
+                // Si success es true, continuar con la navegación...
+                const userDetails = data.user_details;
+                // --- FIN DEL CÓDIGO CORREGIDO ---
+                
+                // Aquí ya no hace falta navegar porque la lógica está en la función 'login'
                 
                 return data;
             } catch (err) {
                 // Manejar cualquier error de autenticación
                 console.error("❌ Error en autenticación:", err);
+                
                 // Mostrar mensaje de error al usuario
                 showErrorModal('Error de Autenticación', err.message || 'No se pudo iniciar sesión');
+                
                 throw err;
             }
         };
@@ -441,8 +437,6 @@
             }
         };
         
-        // --- FIN DE LA MODIFICACIÓN ---
-
         const loadCompanyLogoForLogin = async () => {
              try {
                 const { data, error } = await supabase.from('company_details').select('logo').limit(1).maybeSingle();
@@ -815,10 +809,10 @@
             if (pin.length !== 4) { modalError.textContent = "El PIN debe tener 4 dígitos."; return; }
             
             try {
-                if (id) { // Editando
+                if (id) {
                     const { error } = await supabase.from('users').update({ name, email, pin, role }).eq('id', id);
                     if (error) throw error;
-                } else { // Creando
+                } else {
                     const { error } = await supabase.from('users').insert({ name, email, pin, role });
                     if(error) throw error;
                 }
