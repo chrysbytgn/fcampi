@@ -90,7 +90,7 @@
         };
 
         const enterPin = (num) => {
-            const pinLength = 6; // Puedes cambiar esto a 4 o 6 según prefieras
+            const pinLength = 4; // Puedes cambiar esto a 4 o 6 según prefieras
             if (currentPin.length < pinLength) {
                 currentPin += num;
                 updatePinDisplay();
@@ -103,30 +103,28 @@
             document.getElementById('login-error').textContent = '';
         };
 
-        // --- FUNCIÓN DE LOGIN ACTUALIZADA ---
         const login = async () => {
             const loginError = document.getElementById('login-error');
             loginError.textContent = '';
 
             try {
-                const response = await supabase.functions.invoke('login-with-pin', {
+                // 1. Pedimos el "ticket temporal" a nuestra función
+                const { data: magicLinkData, error: invokeError } = await supabase.functions.invoke('login-with-pin', {
                     body: { pin: currentPin }
                 });
 
-                // Manejar errores devueltos por la función de forma explícita
-                if (response.error) {
-                    throw response.error;
-                }
-                if (response.data && response.data.error) {
-                    throw new Error(response.data.error);
-                }
+                if (invokeError) throw invokeError;
+                if (magicLinkData.error) throw new Error(magicLinkData.error);
 
-                const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-                    access_token: response.data.session.access_token,
-                    refresh_token: response.data.session.refresh_token,
+                // 2. Extraemos el token del ticket y lo "canjeamos" por una sesión real
+                const { data, error: sessionError } = await supabase.auth.verifyOtp({
+                    token_hash: magicLinkData.properties.hashed_token,
+                    type: 'magiclink'
                 });
 
                 if (sessionError) throw sessionError;
+
+                // Si todo va bien, el evento onAuthStateChange se encargará de redirigir
 
             } catch (err) {
                 console.error("Error en login:", err);
