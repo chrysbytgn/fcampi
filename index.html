@@ -13,10 +13,10 @@
         #employee-view, #manager-view, #login-view, #loading-view { display: none; }
         .btn { padding: 0.75rem 1.25rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.3s ease-in-out; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 1rem; border: none; cursor: pointer; }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
-        .btn:active { transform: translateY(0); box-shadow: none; }
-        button:disabled, .btn:disabled { opacity: 0.6; cursor: not-allowed; background-color: #d1d5db !important; color: #6b7280 !important; transform: none !important; box-shadow: none !important; }
+        button:disabled, .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
         .pin-btn { background-color: #e5e7eb; color: #374151; min-width: 3rem; height: 3rem; border-radius: 9999px; font-size: 1.25rem; }
         .btn-primary { background-color: #4b5bff; color: #ffffff; }
+        .btn-danger { background-color: #ef4444; color: #ffffff; }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
@@ -24,13 +24,12 @@
 
         <div id="loading-view" class="text-center">
             <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
-            <p class="mt-4 text-lg" id="loading-message">Cargando...</p>
+            <p class="mt-4 text-lg">Cargando...</p>
         </div>
 
         <div id="login-view">
             <div class="bg-white p-8 rounded-xl shadow-lg max-w-sm mx-auto">
                 <div class="text-center mb-6">
-                    <img id="login-logo" src="https://placehold.co/200x80/6366f1/ffffff?text=Tu+Logo" alt="Logo" class="h-16 mx-auto mb-4 object-contain">
                     <h1 class="text-2xl font-bold">CampiClock</h1>
                     <p class="text-slate-500">Introduce tu PIN</p>
                 </div>
@@ -48,7 +47,7 @@
                     <button data-action="enter-pin" data-value="7" class="pin-btn btn">7</button>
                     <button data-action="enter-pin" data-value="8" class="pin-btn btn">8</button>
                     <button data-action="enter-pin" data-value="9" class="pin-btn btn">9</button>
-                    <button data-action="clear-pin" class="pin-btn btn btn-secondary"><i class="fas fa-times"></i></button>
+                    <button data-action="clear-pin" class="pin-btn btn"><i class="fas fa-times"></i></button>
                     <button data-action="enter-pin" data-value="0" class="pin-btn btn">0</button>
                     <button data-action="login" class="pin-btn btn btn-primary"><i class="fas fa-check"></i></button>
                 </div>
@@ -59,11 +58,7 @@
         <div id="employee-view">
             <h1>Bienvenido, <span id="employee-name"></span></h1>
             <button data-action="logout" class="btn btn-danger">Cerrar Sesión</button>
-            </div>
-        <div id="manager-view">
-            <h1>Panel de Administración</h1>
-            <button data-action="logout" class="btn btn-danger">Cerrar Sesión</button>
-            </div>
+        </div>
     </div>
 
     <script type="module">
@@ -71,12 +66,7 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoemFscXFoeGxxcG5hc3d6cmF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4ODg2MjcsImV4cCI6MjA3MTQ2NDYyN30.tworaVCWL7suWJqtbR7mIXEivdZaM3lBVtgJLgwRvYc';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const views = {
-            loading: document.getElementById('loading-view'),
-            login: document.getElementById('login-view'),
-            employee: document.getElementById('employee-view'),
-            manager: document.getElementById('manager-view')
-        };
+        const views = { loading: document.getElementById('loading-view'), login: document.getElementById('login-view'), employee: document.getElementById('employee-view') };
         let currentUser = null;
         let currentPin = '';
 
@@ -84,19 +74,15 @@
             Object.values(views).forEach(v => v.style.display = 'none');
             views[viewName].style.display = 'block';
         };
-
         const updatePinDisplay = () => {
             document.getElementById('pin-display').textContent = '*'.repeat(currentPin.length);
         };
-
         const enterPin = (num) => {
-            const pinLength = 4; // Puedes cambiar esto a 4 o 6 según prefieras
-            if (currentPin.length < pinLength) {
+            if (currentPin.length < 4) {
                 currentPin += num;
                 updatePinDisplay();
             }
         };
-
         const clearPin = () => {
             currentPin = '';
             updatePinDisplay();
@@ -106,25 +92,25 @@
         const login = async () => {
             const loginError = document.getElementById('login-error');
             loginError.textContent = '';
-
             try {
-                // 1. Pedimos el "ticket temporal" a nuestra función
-                const { data: magicLinkData, error: invokeError } = await supabase.functions.invoke('login-with-pin', {
+                const { data: responseData, error: invokeError } = await supabase.functions.invoke('login-with-pin', {
                     body: { pin: currentPin }
                 });
 
                 if (invokeError) throw invokeError;
-                if (magicLinkData.error) throw new Error(magicLinkData.error);
+                if (responseData.error) throw new Error(responseData.error);
 
-                // 2. Extraemos el token del ticket y lo "canjeamos" por una sesión real
+                // Verificación CRUCIAL: Asegurarse de que la respuesta y sus propiedades existen
+                if (!responseData || !responseData.properties || !responseData.properties.hashed_token) {
+                    throw new Error("La respuesta del servidor no es válida.");
+                }
+
                 const { data, error: sessionError } = await supabase.auth.verifyOtp({
-                    token_hash: magicLinkData.properties.hashed_token,
+                    token_hash: responseData.properties.hashed_token,
                     type: 'magiclink'
                 });
 
                 if (sessionError) throw sessionError;
-
-                // Si todo va bien, el evento onAuthStateChange se encargará de redirigir
 
             } catch (err) {
                 console.error("Error en login:", err);
@@ -135,9 +121,6 @@
         
         const logout = async () => {
             await supabase.auth.signOut();
-            currentUser = null;
-            currentPin = '';
-            updatePinDisplay();
         };
 
         const loadUserAndRedirect = async () => {
@@ -145,22 +128,15 @@
             if (!user) throw new Error("No hay usuario autenticado.");
             
             const { data: userData, error } = await supabase.from('users').select('*').eq('auth_id', user.id).single();
-
             if (error) throw new Error("No se pudo cargar el perfil de usuario.");
             
             currentUser = userData;
-
-            if (currentUser.role === 'manager') {
-                showView('manager');
-            } else {
-                document.getElementById('employee-name').textContent = currentUser.name;
-                showView('employee');
-            }
+            document.getElementById('employee-name').textContent = currentUser.name;
+            showView('employee');
         };
         
         const init = () => {
             showView('loading');
-
             supabase.auth.onAuthStateChange(async (event, session) => {
                 if (event === 'SIGNED_IN' || (event === 'INITIAL_SESSION' && session)) {
                     try {
@@ -170,6 +146,9 @@
                         await logout();
                     }
                 } else if (event === 'SIGNED_OUT' || (event === 'INITIAL_SESSION' && !session)) {
+                    currentUser = null;
+                    currentPin = '';
+                    updatePinDisplay();
                     showView('login');
                 }
             });
