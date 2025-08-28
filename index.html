@@ -13,7 +13,7 @@
         #employee-view, #manager-view, #login-view, #loading-view { display: none; }
         .btn { padding: 0.75rem 1.25rem; border-radius: 0.375rem; font-weight: 500; transition: all 0.3s ease-in-out; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 1rem; border: none; cursor: pointer; }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
-        button:disabled, .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
         .pin-btn { background-color: #e5e7eb; color: #374151; min-width: 3rem; height: 3rem; border-radius: 9999px; font-size: 1.25rem; }
         .btn-primary { background-color: #4b5bff; color: #ffffff; }
         .btn-danger { background-color: #ef4444; color: #ffffff; }
@@ -33,7 +33,6 @@
                     <h1 class="text-2xl font-bold">CampiClock</h1>
                     <p class="text-slate-500">Introduce tu PIN</p>
                 </div>
-
                 <div class="mb-4">
                     <div id="pin-display" class="bg-slate-100 text-center text-3xl font-mono tracking-widest h-16 flex items-center justify-center rounded-lg mt-2"></div>
                 </div>
@@ -78,10 +77,7 @@
             document.getElementById('pin-display').textContent = '*'.repeat(currentPin.length);
         };
         const enterPin = (num) => {
-            if (currentPin.length < 4) {
-                currentPin += num;
-                updatePinDisplay();
-            }
+            if (currentPin.length < 4) { currentPin += num; updatePinDisplay(); }
         };
         const clearPin = () => {
             currentPin = '';
@@ -99,17 +95,14 @@
 
                 if (invokeError) throw invokeError;
                 if (responseData.error) throw new Error(responseData.error);
-
-                // Verificación CRUCIAL: Asegurarse de que la respuesta y sus propiedades existen
                 if (!responseData || !responseData.properties || !responseData.properties.hashed_token) {
                     throw new Error("La respuesta del servidor no es válida.");
                 }
 
-                const { data, error: sessionError } = await supabase.auth.verifyOtp({
+                const { error: sessionError } = await supabase.auth.verifyOtp({
                     token_hash: responseData.properties.hashed_token,
                     type: 'magiclink'
                 });
-
                 if (sessionError) throw sessionError;
 
             } catch (err) {
@@ -127,8 +120,24 @@
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("No hay usuario autenticado.");
             
-            const { data: userData, error } = await supabase.from('users').select('*').eq('auth_id', user.id).single();
-            if (error) throw new Error("No se pudo cargar el perfil de usuario.");
+            // --- INICIO DE LA MODIFICACIÓN ---
+            // Usamos .maybeSingle() para que devuelva 'null' en lugar de un error si no encuentra al usuario.
+            const { data: userData, error } = await supabase
+                .from('users')
+                .select('*')
+                .eq('auth_id', user.id)
+                .maybeSingle(); 
+
+            if (error) {
+                // Si hay un error que no sea "0 filas", lo lanzamos
+                throw error;
+            }
+
+            // Si no se encontraron datos de usuario (perfil no sincronizado), lanzamos un error claro.
+            if (!userData) {
+                throw new Error("El perfil de usuario no existe en la base de datos.");
+            }
+            // --- FIN DE LA MODIFICACIÓN ---
             
             currentUser = userData;
             document.getElementById('employee-name').textContent = currentUser.name;
