@@ -24,7 +24,7 @@
 
         <div id="loading-view" class="text-center">
             <i class="fas fa-spinner fa-spin text-4xl text-indigo-600"></i>
-            <p class="mt-4 text-lg">Cargando...</p>
+            <p class="mt-4 text-lg" id="loading-message">Cargando...</p>
         </div>
 
         <div id="login-view">
@@ -58,6 +58,10 @@
             <h1>Bienvenido, <span id="employee-name"></span></h1>
             <button data-action="logout" class="btn btn-danger">Cerrar Sesión</button>
         </div>
+        <div id="manager-view">
+            <h1>Panel de Administración para <span id="manager-name"></span></h1>
+            <button data-action="logout" class="btn btn-danger">Cerrar Sesión</button>
+        </div>
     </div>
 
     <script type="module">
@@ -65,11 +69,16 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRoemFscXFoeGxxcG5hc3d6cmF3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU4ODg2MjcsImV4cCI6MjA3MTQ2NDYyN30.tworaVCWL7suWJqtbR7mIXEivdZaM3lBVtgJLgwRvYc';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const views = { loading: document.getElementById('loading-view'), login: document.getElementById('login-view'), employee: document.getElementById('employee-view') };
-        let currentUser = null;
+        const views = { 
+            loading: document.getElementById('loading-view'), 
+            login: document.getElementById('login-view'), 
+            employee: document.getElementById('employee-view'),
+            manager: document.getElementById('manager-view')
+        };
         let currentPin = '';
 
         const showView = (viewName) => {
+            console.log(`Mostrando vista: ${viewName}`);
             Object.values(views).forEach(v => v.style.display = 'none');
             views[viewName].style.display = 'block';
         };
@@ -86,6 +95,7 @@
         };
 
         const login = async () => {
+            console.log("Intentando login...");
             const loginError = document.getElementById('login-error');
             loginError.textContent = '';
             try {
@@ -95,69 +105,78 @@
 
                 if (invokeError) throw invokeError;
                 if (responseData.error) throw new Error(responseData.error);
-                if (!responseData || !responseData.properties || !responseData.properties.hashed_token) {
-                    throw new Error("La respuesta del servidor no es válida.");
-                }
+                if (!responseData || !responseData.session) throw new Error("Respuesta del servidor inválida.");
 
-                const { error: sessionError } = await supabase.auth.verifyOtp({
-                    token_hash: responseData.properties.hashed_token,
-                    type: 'magiclink'
-                });
+                const { error: sessionError } = await supabase.auth.setSession(responseData.session);
                 if (sessionError) throw sessionError;
+                
+                console.log("Login exitoso, sesión establecida.");
+                // onAuthStateChange se encargará del resto
 
             } catch (err) {
-                console.error("Error en login:", err);
+                console.error("Error detallado en login:", err);
                 loginError.textContent = err.message || 'PIN incorrecto o error del servidor.';
                 clearPin();
             }
         };
         
         const logout = async () => {
+            console.log("Cerrando sesión...");
             await supabase.auth.signOut();
+            currentPin = '';
+            updatePinDisplay();
+            showView('login');
         };
 
         const loadUserAndRedirect = async () => {
+            console.log("Cargando perfil de usuario...");
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error("No hay usuario autenticado.");
+            if (!user) {
+                throw new Error("No se encontró usuario en la sesión de Supabase.");
+            }
             
-            // --- INICIO DE LA MODIFICACIÓN ---
-            // Usamos .maybeSingle() para que devuelva 'null' en lugar de un error si no encuentra al usuario.
+            console.log(`Buscando perfil para auth_id: ${user.id}`);
             const { data: userData, error } = await supabase
                 .from('users')
                 .select('*')
                 .eq('auth_id', user.id)
-                .maybeSingle(); 
+                .maybeSingle();
 
             if (error) {
-                // Si hay un error que no sea "0 filas", lo lanzamos
-                throw error;
+                console.error("Error de base de datos al buscar perfil:", error);
+                throw new Error("Error de base de datos al buscar perfil.");
             }
-
-            // Si no se encontraron datos de usuario (perfil no sincronizado), lanzamos un error claro.
-            if (!userData) {
-                throw new Error("El perfil de usuario no existe en la base de datos.");
-            }
-            // --- FIN DE LA MODIFICACIÓN ---
             
-            currentUser = userData;
-            document.getElementById('employee-name').textContent = currentUser.name;
-            showView('employee');
+            if (!userData) {
+                console.error(`No se encontró ningún perfil en la tabla 'users' con el auth_id: ${user.id}`);
+                throw new Error("El perfil de usuario no está sincronizado en la base de datos.");
+            }
+            
+            console.log("Perfil de usuario encontrado:", userData);
+            
+            if (userData.role === 'manager') {
+                document.getElementById('manager-name').textContent = userData.name;
+                showView('manager');
+            } else {
+                document.getElementById('employee-name').textContent = userData.name;
+                showView('employee');
+            }
         };
         
         const init = () => {
+            console.log("Inicializando la aplicación...");
             showView('loading');
+
             supabase.auth.onAuthStateChange(async (event, session) => {
+                console.log(`Evento de autenticación recibido: ${event}`);
                 if (event === 'SIGNED_IN' || (event === 'INITIAL_SESSION' && session)) {
                     try {
                         await loadUserAndRedirect();
                     } catch (error) {
-                        console.error('Error al cargar datos de usuario:', error);
+                        console.error('Fallo en el proceso de carga y redirección, cerrando sesión.', error);
                         await logout();
                     }
                 } else if (event === 'SIGNED_OUT' || (event === 'INITIAL_SESSION' && !session)) {
-                    currentUser = null;
-                    currentPin = '';
-                    updatePinDisplay();
                     showView('login');
                 }
             });
